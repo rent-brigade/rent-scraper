@@ -1,0 +1,61 @@
+{
+  "name": "@rent-scraper/create-config",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./bin/run-create-config": {
+      "types": "./dist/bin/run-create-config.d.mts",
+      "default": "./dist/bin/run-create-config.mjs"
+    },
+    "./bin/run-init-config": {
+      "types": "./dist/bin/run-init-config.d.mts",
+      "default": "./dist/bin/run-init-config.mjs"
+    },
+    "./bin/run-check-config": {
+      "types": "./dist/bin/run-check-config.d.mts",
+      "default": "./dist/bin/run-check-config.mjs"
+    },
+    "./bin/run-generate-region-ids": {
+      "types": "./dist/bin/run-generate-region-ids.d.mts",
+      "default": "./dist/bin/run-generate-region-ids.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild",
+    "dev": "tsx --env-file-if-exists=.env src/bin/run-create-config.ts",
+    "start": "node --env-file-if-exists=.env dist/bin/run-create-config.mjs",
+    "init-config:dev": "tsx --env-file-if-exists=.env src/bin/run-init-config.ts",
+    "init-config": "node --env-file-if-exists=.env dist/bin/run-init-config.mjs",
+    "check-config:dev": "tsx --env-file-if-exists=.env src/bin/run-check-config.ts",
+    "check-config": "node --env-file-if-exists=.env dist/bin/run-check-config.mjs",
+    "generate-region-ids:dev": "tsx --env-file-if-exists=.env src/bin/run-generate-region-ids.ts",
+    "generate-region-ids": "node --env-file-if-exists=.env dist/bin/generate-region-ids.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.842.0",
+    "@clack/prompts": "alpha",
+    "@google-cloud/storage": "^7.16.0",
+    "@pnpm/find-workspace-dir": "^1000.1.0",
+    "@rent-scraper/api": "workspace:*",
+    "@rent-scraper/utils": "workspace:*",
+    "@rent-scraper/browser-server": "workspace:*",
+    "axios": "^1.10.0",
+    "dayjs": "^1.11.13",
+    "minimist": "^1.2.8",
+    "picocolors": "^1.1.1",
+    "puppeteer": "^24.11.2"
+  },
+  "devDependencies": {
+    "@types/minimist": "^1.2.5",
+    "tsx": "^4.20.3",
+    "unbuild": "^3.5.0"
+  }
+}
