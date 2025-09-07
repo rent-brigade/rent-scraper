@@ -1,0 +1,49 @@
+{
+  "name": "rent-scraper",
+  "version": "1.0.0",
+  "license": "MIT",
+  "description": "Tools for scraping rent data",
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "pnpm run --parallel build",
+    "browser-server:dev": "pnpm run --filter browser-server dev",
+    "browser-server": "pnpm run --silent --filter browser-server start",
+    "check-config:dev": "pnpm run --filter create-config check-config:dev",
+    "check-config": "pnpm run --silent --filter create-config check-config",
+    "scrape-listings:dev": "pnpm run --filter scrape-listings dev",
+    "scrape-listings": "pnpm run --silent --filter scrape-listings start",
+    "create-config:dev": "pnpm run --filter create-config dev",
+    "create-config": "pnpm run --silent --filter create-config start",
+    "rent-scraper:dev": "pnpm run --filter rent-scraper dev",
+    "rent-scraper": "pnpm run --silent --filter rent-scraper start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "heroku-postbuild": "pnpm build",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.1",
+    "@stylistic/eslint-plugin": "^5.1.0",
+    "eslint": "^9.30.1",
+    "globals": "^16.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.2",
+    "prettier": "^3.6.2",
+    "typescript-eslint": "^8.35.1"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}

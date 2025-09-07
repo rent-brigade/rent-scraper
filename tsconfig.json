@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "nodenext",
+    "target": "ESNext",
+    "moduleResolution": "node16",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
+    "lib": ["ES2022", "DOM"],
+    "paths": {
+      "@rent-scraper/api": ["./packages/api/src/index.ts"],
+      "@rent-scraper/api/config": ["./packages/api/src/config.ts"],
+      "@rent-scraper/utils": ["./packages/utils/src/index.ts"],
+      "@rent-scraper/utils/config": ["./packages/utils/src/config.ts"],
+      "@rent-scraper/browser-server": [
+        "./packages/browser-server/src/index.ts"
+      ],
+      "@rent-scraper/create-config": ["./packages/create-config/src/index.ts"],
+      "@rent-scraper/scrape-listings": [
+        "./packages/scrape-listings/src/index.ts"
+      ]
+    }
+  },
+  "includes": ["packages/**/*.ts"]
+}
