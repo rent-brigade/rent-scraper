@@ -1,0 +1,33 @@
+{
+  "name": "@rent-scraper/utils",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./config": {
+      "types": "./dist/config.d.mts",
+      "default": "./dist/config.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild"
+  },
+  "dependencies": {
+    "@rent-scraper/api": "workspace:*",
+    "@clack/prompts": "alpha",
+    "axios": "^1.10.0",
+    "csv": "^6.3.11",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "unbuild": "^3.5.0"
+  }
+}
