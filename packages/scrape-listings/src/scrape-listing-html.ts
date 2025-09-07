@@ -162,9 +162,10 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
   s.stop('Listings HTML files have been saved to:')
   const zillowOutputPath = await getZillowOutputPath()
   const redfinOutputPath = await getRedfinOutputPath()
-  log.message(path.join(zillowOutputPath, source, 'listings', path.basename(inputDirectory)))
-
   const outputPath = source === 'zillow' ? zillowOutputPath : redfinOutputPath
+
+  log.message(path.join(outputPath, source, 'listings', path.basename(inputDirectory)))
+
   const logsDirectory = path.join(outputPath, source, 'logs')
   if (!await checkForFile(logsDirectory)) {
     await mkdir(logsDirectory, { recursive: true })

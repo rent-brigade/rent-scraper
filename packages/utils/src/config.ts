@@ -9,6 +9,7 @@ export interface ScrapeConfig {
   outputPath: string
   source?: ListingsSource
   zipCodes: string
+  daysListed?: number
   regionIds?: Record<number, number | null>
   browser?: BrowserKey
   zillowCookie?: string

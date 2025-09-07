@@ -42,8 +42,8 @@ export async function runInitConfig(source?: ListingsSource) {
 
   const outputPath = config?.outputPath ?? await text({
     message: 'Where would like you the data to be stored?',
-    defaultValue: './rent-data',
     placeholder: './rent-data',
+    defaultValue: './rent-data',
   }) as string
 
   if (isCancel(outputPath)) {
@@ -69,7 +69,7 @@ export async function runInitConfig(source?: ListingsSource) {
 
   const zipCodeResponse = config?.zipCodes ?? await text({
     message: 'What zip codes would you like to scrape?',
-    placeholder: '90026, 90039, 90027',
+    placeholder: 'Example: 90026, 90039, 90027',
     validate(value) {
       if (!value || value?.length === 0) return `Please enter a list of zip codes`
     },
@@ -127,6 +127,20 @@ export async function runInitConfig(source?: ListingsSource) {
     return process.exit(1)
   }
 
+  const daysListed = config?.daysListed ?? await text({
+    message: 'How many days would you like to search listings? (Max. 90)',
+    placeholder: '1',
+    defaultValue: '1',
+    validate(value) {
+      if (value && value === '0') return `Please enter a number `
+    },
+  })
+
+  if (isCancel(daysListed)) {
+    cancel('Operation cancelled')
+    return process.exit(1)
+  }
+
   // await sleep(1000)
   // log.info('')
 
@@ -143,10 +157,10 @@ export async function runInitConfig(source?: ListingsSource) {
 
   const answers = [
     `Listings source: ${source}`,
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string
     `Output path: ${outputPath}`,
     ...(browser ? [`Browser: ${browser}`] : []),
     `Zip codes: ${zipCodes.join(', ')}`,
+    `Days listed: ${daysListed}`,
   ].filter(x => x)
 
   log.info('')
@@ -171,6 +185,7 @@ export async function runInitConfig(source?: ListingsSource) {
     outputPath: path.isAbsolute(outputPath) ? outputPath : parseAbsolutePath(outputPath),
     ...(browser && { browser }),
     zipCodes: zipCodes.join(', '),
+    daysListed: Number(daysListed),
   } as ScrapeConfig
 
   await tasks([

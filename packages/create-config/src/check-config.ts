@@ -4,15 +4,17 @@ import type { ListingsSource } from '@rent-scraper/api'
 import { runBrowserServer, runConfirmBrowserLaunch } from '@rent-scraper/browser-server'
 
 export async function runCheckConfig(source: ListingsSource) {
-  await runConfirmBrowserLaunch()
-  runBrowserServer()
-  await resetZillowCookie()
-  log.info('Waiting for Server')
-  await waitForBrowserServer()
+  if (source === 'zillow') {
+    await runConfirmBrowserLaunch()
+    runBrowserServer()
+    await resetZillowCookie()
+    log.info('Waiting for Server')
+    await waitForBrowserServer()
 
-  if (!await checkForZillowCookie()) {
-    log.info('Waiting for Zillow cookie')
-    await waitForZillowCookie()
+    if (!await checkForZillowCookie()) {
+      log.info('Waiting for Zillow cookie')
+      await waitForZillowCookie()
+    }
   }
 
   const config = await checkForAndReadConfigFile(source)

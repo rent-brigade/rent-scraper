@@ -10,7 +10,7 @@ import { scrapeListingDetailsFromHtmlByZipCodes } from './scrape-listing-details
 import { scrapeListingHtmlByZipCodes } from './scrape-listing-html.js'
 import { scrapeZillowListingResultsByZipCodes } from './scrape-zillow-listing-results.js'
 import { scrapeRedfinListingResultsByZipCodes } from './scrape-redfin-listing-results.js'
-import { getRedfinOutputPath, getRedfinZipCodes, getZillowOutputPath, getZillowZipCodes } from '@rent-scraper/api/config'
+import { getRedfinOutputPath, getRedfinZipCodes, getZillowOutputPath, getZillowZipCodes, getZillowDaysListed, getRedfinDaysListed } from '@rent-scraper/api/config'
 import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { checkBrowserServer } from '@rent-scraper/utils/config'
@@ -68,16 +68,20 @@ const scrapeRedfinListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirect
 
 export async function runScrapeListings() {
   intro(color.inverse(' scrape listings '))
-  const running = await checkBrowserServer()
-  if (!running) {
-    throwError('Please launch the browser server before scraping.')
-  }
   const args = minimist(process.argv.slice(2))
   const source = args.source ?? 'zillow'
+
+  if (source === 'zillow') {
+    const running = await checkBrowserServer()
+    if (!running) {
+      throwError('Please launch the browser server before scraping.')
+    }
+  }
+
   const zillowOutputPath = await getZillowOutputPath()
   const redfinOutputPath = await getRedfinOutputPath()
   const outputPath = source === 'zillow' ? zillowOutputPath : redfinOutputPath
-  const daysListed = args['days-listed'] ?? 1
+  const daysListed = args['days-listed'] ?? (source === 'zillow' ? await getZillowDaysListed() : await getRedfinDaysListed()) ?? 1
 
   const runs = args.runs ?? 1 // allow multiple runs to catch any listings that might have been missed
   const reruns = args.reruns ?? 0 // allow re-runs on error
