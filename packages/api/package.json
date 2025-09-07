@@ -1,0 +1,33 @@
+{
+  "name": "@rent-scraper/api",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    },
+    "./config": {
+      "types": "./dist/config.d.mts",
+      "default": "./dist/config.mjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "unbuild"
+  },
+  "dependencies": {
+    "@rent-scraper/utils": "workspace:*",
+    "axios": "^1.10.0",
+    "cheerio": "^1.1.0",
+    "dayjs": "^1.11.13",
+    "puppeteer": "^24.11.2"
+  },
+  "devDependencies": {
+    "unbuild": "^3.5.0"
+  }
+}
