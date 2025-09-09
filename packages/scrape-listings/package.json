@@ -27,7 +27,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "prepublish": "npm run lint && npm run build"
+    "prepublish": "npm run lint && npm run build",
+    "publish": "npm publish --access=public"
   },
   "repository": {
     "type": "git",
