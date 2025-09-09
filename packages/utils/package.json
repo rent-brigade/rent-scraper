@@ -1,6 +1,6 @@
 {
   "name": "@rent-scraper/utils",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "module",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
