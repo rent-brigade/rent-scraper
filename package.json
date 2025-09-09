@@ -23,7 +23,7 @@
     "lint": "pnpm run --parallel lint",
     "lint:fix": "pnpm run --parallel lint:fix",
     "prepare": "husky",
-    "release": "pnpm --parallel prepublish && bumpp -r && pnpm run --parallel publish --workspaces"
+    "release": "pnpm --parallel prepublish && bumpp -r && npm run publish --workspaces"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
