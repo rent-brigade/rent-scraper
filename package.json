@@ -22,7 +22,8 @@
     "typecheck": "pnpm run --parallel typecheck",
     "lint": "pnpm run --parallel lint",
     "lint:fix": "pnpm run --parallel lint:fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "release": "pnpm run lint && pnpm run build && bumpp && npm -r publish --access=public"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

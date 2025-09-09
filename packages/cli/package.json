@@ -11,6 +11,7 @@
   "author": "Max Stein <maxwell.stein@gmail.com> (https://maxstein.net)",
   "license": "MIT",
   "description": "Scrape data from rental listings from the command line",
+  "bin": "./dist/bin/run-rent-scraper.mjs",
   "files": [
     "dist"
   ],
@@ -21,8 +22,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "prepublish": "npm run lint && npm run build",
-    "release": "npm run lint && npm run build && bumpp && npm publish"
+    "prepublish": "npm run lint && npm run build"
   },
   "repository": {
     "type": "git",
