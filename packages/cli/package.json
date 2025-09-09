@@ -1,7 +1,6 @@
 {
   "name": "rent-scraper",
   "version": "1.0.0",
-  "description": "",
   "type": "module",
   "exports": {
     ".": {
@@ -9,22 +8,36 @@
       "default": "./dist/index.mjs"
     }
   },
+  "author": "Max Stein <maxwell.stein@gmail.com> (https://maxstein.net)",
+  "license": "MIT",
+  "description": "Scrape data from rental listings from the command line",
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "unbuild",
     "start": "node --env-file-if-exists=.env dist/bin/run-rent-scraper.mjs",
-    "dev": "tsx --env-file-if-exists=.env src/bin/run-rent-scraper.ts"
+    "dev": "tsx --env-file-if-exists=.env src/bin/run-rent-scraper.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "prepublish": "npm run lint && npm run build",
+    "release": "npm run lint && && npm run build && bumpp && npm publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rent-brigade/rent-scraper.git",
+    "directory": "packages/cli"
   },
   "dependencies": {
-    "@rent-scraper/api": "workspace:*",
-    "@rent-scraper/utils": "workspace:*",
-    "@rent-scraper/create-config": "workspace:*",
-    "@rent-scraper/browser-server": "workspace:*",
-    "@rent-scraper/scrape-listings": "workspace:*",
     "@clack/prompts": "alpha",
+    "@rent-scraper/api": "workspace:*",
+    "@rent-scraper/browser-server": "workspace:*",
+    "@rent-scraper/create-config": "workspace:*",
+    "@rent-scraper/scrape-listings": "workspace:*",
+    "@rent-scraper/utils": "workspace:*",
     "axios": "^1.10.0",
+    "bumpp": "^10.2.3",
     "dayjs": "^1.11.13",
     "minimist": "^1.2.8",
     "picocolors": "^1.1.1"
@@ -33,5 +46,8 @@
     "@types/minimist": "^1.2.5",
     "tsx": "^4.20.3",
     "unbuild": "^3.5.0"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

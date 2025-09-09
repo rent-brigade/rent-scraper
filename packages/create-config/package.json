@@ -1,7 +1,6 @@
 {
   "name": "@rent-scraper/create-config",
   "version": "1.0.0",
-  "description": "",
   "type": "module",
   "exports": {
     ".": {
@@ -25,6 +24,9 @@
       "default": "./dist/bin/run-generate-region-ids.mjs"
     }
   },
+  "author": "Max Stein <maxwell.stein@gmail.com> (https://maxstein.net)",
+  "license": "MIT",
+  "description": "Creates config files for running rent-scraper",
   "files": [
     "dist"
   ],
@@ -37,7 +39,17 @@
     "check-config:dev": "tsx --env-file-if-exists=.env src/bin/run-check-config.ts",
     "check-config": "node --env-file-if-exists=.env dist/bin/run-check-config.mjs",
     "generate-region-ids:dev": "tsx --env-file-if-exists=.env src/bin/run-generate-region-ids.ts",
-    "generate-region-ids": "node --env-file-if-exists=.env dist/bin/generate-region-ids.mjs"
+    "generate-region-ids": "node --env-file-if-exists=.env dist/bin/generate-region-ids.mjs",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "prepublish": "npm run lint && npm run build",
+    "release": "npm run lint && && npm run build && bumpp && npm publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rent-brigade/rent-scraper.git",
+    "directory": "packages/create-config"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.842.0",
@@ -45,9 +57,10 @@
     "@google-cloud/storage": "^7.16.0",
     "@pnpm/find-workspace-dir": "^1000.1.0",
     "@rent-scraper/api": "workspace:*",
-    "@rent-scraper/utils": "workspace:*",
     "@rent-scraper/browser-server": "workspace:*",
+    "@rent-scraper/utils": "workspace:*",
     "axios": "^1.10.0",
+    "bumpp": "^10.2.3",
     "dayjs": "^1.11.13",
     "minimist": "^1.2.8",
     "picocolors": "^1.1.1",
@@ -57,5 +70,8 @@
     "@types/minimist": "^1.2.5",
     "tsx": "^4.20.3",
     "unbuild": "^3.5.0"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

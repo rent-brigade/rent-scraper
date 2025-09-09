@@ -19,10 +19,9 @@
     "create-config": "pnpm run --silent --filter create-config start",
     "rent-scraper:dev": "pnpm run --filter rent-scraper dev",
     "rent-scraper": "pnpm run --silent --filter rent-scraper start",
-    "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "lint:fix": "eslint --fix .",
-    "heroku-postbuild": "pnpm build",
+    "typecheck": "pnpm run --parallel typecheck",
+    "lint": "pnpm run --parallel lint",
+    "lint:fix": "pnpm run --parallel lint:fix",
     "prepare": "husky"
   },
   "devDependencies": {

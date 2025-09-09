@@ -1,7 +1,6 @@
 {
   "name": "@rent-scraper/browser-server",
   "version": "1.0.0",
-  "description": "",
   "type": "module",
   "exports": {
     ".": {
@@ -13,19 +12,31 @@
       "default": "./dist/bin/run-browser-server.mjs"
     }
   },
+  "author": "Max Stein <maxwell.stein@gmail.com> (https://maxstein.net)",
+  "license": "MIT",
+  "description": "Local browser server to help scrape data for rental listings",
   "scripts": {
     "dev": "tsx ./src/bin/run-browser-server.ts",
     "build": "unbuild",
     "start": "node ./dist/bin/run-browser-server.mjs",
     "cli:dev": "tsx src/cli.ts",
     "cli": "node dist/cli.mjs",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "lint:fix": "eslint --fix ."
+    "lint:fix": "eslint --fix .",
+    "prepublish": "npm run lint && npm run build",
+    "release": "npm run lint && && npm run build && bumpp && npm publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rent-brigade/rent-scraper.git",
+    "directory": "packages/browser-server"
   },
   "dependencies": {
     "@clack/prompts": "alpha",
     "@rent-scraper/api": "workspace:*",
     "@rent-scraper/utils": "workspace:*",
+    "bumpp": "^10.2.3",
     "express": "^4.21.2",
     "picocolors": "^1.1.1",
     "puppeteer": "^24.11.2"
@@ -37,5 +48,8 @@
     "@types/send": "^0.17.5",
     "tsx": "^4.20.3",
     "unbuild": "^3.5.0"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

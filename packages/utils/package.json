@@ -14,20 +14,37 @@
       "default": "./dist/config.mjs"
     }
   },
+  "author": "Max Stein <maxwell.stein@gmail.com> (https://maxstein.net)",
+  "license": "MIT",
+  "description": "Utility functions for rent-scraper",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "unbuild"
+    "build": "unbuild",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "prepublish": "npm run lint && npm run build",
+    "release": "npm run lint && && npm run build && bumpp && npm publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rent-brigade/rent-scraper.git",
+    "directory": "packages/utils"
   },
   "dependencies": {
-    "@rent-scraper/api": "workspace:*",
     "@clack/prompts": "alpha",
+    "@rent-scraper/api": "workspace:*",
     "axios": "^1.10.0",
+    "bumpp": "^10.2.3",
     "csv": "^6.3.11",
     "yaml": "^2.8.0"
   },
   "devDependencies": {
     "unbuild": "^3.5.0"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

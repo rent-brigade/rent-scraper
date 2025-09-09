@@ -3,7 +3,7 @@ import tseslint from 'typescript-eslint'
 import stylistic from '@stylistic/eslint-plugin'
 import globals from 'globals'
 
-export default tseslint.config(
+export default [
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   ...tseslint.configs.recommended,
@@ -59,4 +59,4 @@ export default tseslint.config(
   {
     ignores: ['**/dist/**/*', '**/node_modules/**/*'],
   },
-)
+]
