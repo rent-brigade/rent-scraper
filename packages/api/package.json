@@ -1,6 +1,6 @@
 {
   "name": "@rent-scraper/api",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "type": "module",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
