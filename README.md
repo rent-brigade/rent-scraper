@@ -1,8 +1,10 @@
 # rent-scraper
 
+Scrape data from rental listings
+
 ### Prerequisites
 
-- Node.js >= 20
+- Node.js >= 22
 - pnpm package manager
 - Google Chrome or Brave browser installed
 
