@@ -1,6 +1,6 @@
 {
   "name": "@rent-scraper/utils",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "type": "module",
   "main": "./dist/index.mjs",
   "module": "./dist/index.mjs",
@@ -24,9 +24,7 @@
     "build": "unbuild",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "lint:fix": "eslint --fix .",
-    "prepublish": "npm run lint && npm run build",
-    "publish": "npm publish --access=public"
+    "lint:fix": "eslint --fix ."
   },
   "repository": {
     "type": "git",

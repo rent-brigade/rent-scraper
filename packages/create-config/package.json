@@ -1,6 +1,6 @@
 {
   "name": "@rent-scraper/create-config",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "type": "module",
   "exports": {
     ".": {
@@ -42,9 +42,7 @@
     "generate-region-ids": "node --env-file-if-exists=.env dist/bin/generate-region-ids.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "lint:fix": "eslint --fix .",
-    "prepublish": "npm run lint && npm run build",
-    "publish": "npm publish --access=public"
+    "lint:fix": "eslint --fix ."
   },
   "repository": {
     "type": "git",

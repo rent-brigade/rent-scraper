@@ -1,6 +1,6 @@
 {
   "name": "@rent-scraper/scrape-listings",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "type": "module",
   "exports": {
     ".": {
@@ -26,9 +26,7 @@
     "cli": "node --env-file-if-exists=.env dist/cli.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "lint:fix": "eslint --fix .",
-    "prepublish": "npm run lint && npm run build",
-    "publish": "npm publish --access=public"
+    "lint:fix": "eslint --fix ."
   },
   "repository": {
     "type": "git",
