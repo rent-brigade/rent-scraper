@@ -162,8 +162,9 @@ export const updateConfigFile = async (source: ListingsSource, payload: any) => 
   await writeConfigFile(source, data)
   log.success(`Updated ${source} config: ${keys.join(', ')}`)
 }
+
 export const writeConfigFile = async (source: ListingsSource, config: ScrapeConfig) => {
-  const workspaceDir = await findWorkspaceDir(process.cwd())
+  const workspaceDir = await findWorkspaceDir(process.cwd()) ?? '.'
   if (source === 'redfin') {
     return await writeYamlFile(`${workspaceDir}/config.redfin.yaml`, config)
   } else {
