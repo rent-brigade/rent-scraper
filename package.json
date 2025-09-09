@@ -1,6 +1,6 @@
 {
-  "name": "rent-scraper",
-  "version": "1.0.6",
+  "name": "@rent-scraper/root",
+  "version": "1.0.7",
   "license": "MIT",
   "description": "Tools for scraping rent data",
   "files": [
@@ -23,7 +23,7 @@
     "lint": "pnpm run --parallel lint",
     "lint:fix": "pnpm run --parallel lint:fix",
     "prepare": "husky",
-    "release": "pnpm --parallel prepublish && bumpp -r && pnpm publish -r --no-git-checks --access=public"
+    "release": "pnpm --parallel prepublish && bumpp -r && pnpm publish -r --no-git-checks --access=public --filter '!@rent-scraper/root'"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
