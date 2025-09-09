@@ -16,7 +16,7 @@ export interface ScrapeConfig {
 }
 
 export const getConfigFilePath = async (source: ListingsSource) => {
-  const workspaceDir = await findWorkspaceDir(process.cwd())
+  const workspaceDir = await findWorkspaceDir(process.cwd()) ?? '.'
   return source === 'redfin' ? `${workspaceDir}/config.redfin.yaml` : `${workspaceDir}/config.zillow.yaml`
 }
 
