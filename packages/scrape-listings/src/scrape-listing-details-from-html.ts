@@ -103,10 +103,14 @@ export const scrapeListingDetailsFromHtmlByZipCodes = async (source: ListingsSou
   // loop through zip codes
   const p = progress({ style: 'heavy', max: 100, size: 50 })
   p.start('Scraping listings data')
-  const numChunks = 20
+
+  // sets chunk size to number of zip codes (max 20)
   const numZipCodes = zipCodes.length
+  const numChunks = numZipCodes < 20 ? numZipCodes + 1 : 20
   const chunkSize = numZipCodes > numChunks ? roundValue(numZipCodes / numChunks, 1) : numZipCodes
   const chunks = chunkArray(zipCodes, chunkSize) as number[][]
+
+  // run the scraper in chunks to show progress
   for (const [idx, chunk] of chunks.entries()) {
     const percent = roundValue(((Number(idx) + 1) / numChunks) * 100, 1)
     p.advance(roundValue((1 / (numChunks)) * 100, 1), `Scraping listings (${parsePercentage(percent)})`)
