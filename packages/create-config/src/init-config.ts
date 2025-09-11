@@ -40,11 +40,12 @@ export async function runInitConfig(source?: ListingsSource) {
     return process.exit(1)
   }
 
-  const outputPath = config?.outputPath ?? await text({
+  // sets output path and trims the text input
+  const outputPath = config?.outputPath ?? (await text({
     message: 'Where would like you the data to be stored?',
     placeholder: './rent-data',
     defaultValue: './rent-data',
-  }) as string
+  }) as string)?.trim()
 
   if (isCancel(outputPath)) {
     cancel('Operation cancelled')
@@ -127,14 +128,14 @@ export async function runInitConfig(source?: ListingsSource) {
     return process.exit(1)
   }
 
-  const daysListed = config?.daysListed ?? await text({
+  const daysListed = config?.daysListed ?? (await text({
     message: 'How many days would you like to search listings? (Max. 90)',
     placeholder: '1',
     defaultValue: '1',
     validate(value) {
       if (value && value === '0') return `Please enter a number `
     },
-  })
+  }) as string)?.trim()
 
   if (isCancel(daysListed)) {
     cancel('Operation cancelled')
