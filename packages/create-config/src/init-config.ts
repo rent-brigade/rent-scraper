@@ -133,7 +133,8 @@ export async function runInitConfig(source?: ListingsSource) {
     placeholder: '1',
     defaultValue: '1',
     validate(value) {
-      if (value && value === '0') return `Please enter a number `
+      if (value && value === '0') return `Please enter a number.`
+      else if (Number(value) > 90) return `Please enter a number less than 90.`
     },
   }) as string)?.trim()
 
