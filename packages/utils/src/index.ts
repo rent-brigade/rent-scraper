@@ -4,6 +4,7 @@ import path from 'path'
 import { readFile } from 'fs/promises'
 import * as csv from 'csv'
 import YAML from 'yaml'
+import dayjs from 'dayjs'
 
 export type Id = string | number
 export type Item = Record<string, unknown>
@@ -77,6 +78,9 @@ export const parseError = (error: any) => {
       .map((error: { message?: string }) => error?.message)
       .join('')
     return { status: 400, message }
+  } else if (error?.message === 'canceled') {
+    // catch axios cancel error and respond with timeout message
+    return { status: 400, message: 'request timed out at ' + dayjs().format() }
   } else {
     try {
       if (error?.body) {
@@ -87,8 +91,8 @@ export const parseError = (error: any) => {
         return { status, message }
       }
     } catch {
-      console.log(error)
       const { status, message } = error ?? {}
+      console.log({ status, message })
       return { status: status || 400, message: message || 'Internal Server Error' }
     }
   }

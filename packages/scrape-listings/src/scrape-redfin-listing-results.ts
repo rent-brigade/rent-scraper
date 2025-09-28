@@ -39,7 +39,9 @@ export const scrapeRedfinListingResultsByZipCodes = async (zipCodes: number[], o
   }
 
   for (let i = 1; i <= reruns + 1; i++) {
-    errors.add(`rerun ${i} of ${reruns}`)
+    if (reruns > 0 && i > 1) {
+      errors.add(`rerun ${i - 1} of ${reruns}`)
+    }
     // loop through zip codes and fetch data
     if (i === 1 || doRerun) {
       // loop through zip codes and fetch data
@@ -51,7 +53,7 @@ export const scrapeRedfinListingResultsByZipCodes = async (zipCodes: number[], o
         } catch (error) {
           rerunZipCodes.push(zipCode)
           const { message } = parseError(error)
-          errors.add(message ?? `Error during fetch for ${zipCode}, ${error}`)
+          errors.add('scrape listing results error: ' + (message ?? `Error during fetch for ${zipCode}, ${error}`))
         }
       }))
     }
