@@ -9,11 +9,12 @@ import {
   log,
   tasks,
 } from '@clack/prompts'
+import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
 import type { BrowserKey } from '@rent-scraper/api'
 import type { ListingsSource } from '@rent-scraper/api'
 import { parseAbsolutePath } from '@rent-scraper/utils'
 import type { ScrapeConfig } from '@rent-scraper/utils/config'
-import { readConfigFile, writeConfigFile } from '@rent-scraper/utils/config'
+import { globalDir, readConfigFile, writeConfigFile } from '@rent-scraper/utils/config'
 import path from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import color from 'picocolors'
@@ -40,11 +41,13 @@ export async function runInitConfig(source?: ListingsSource) {
     return process.exit(1)
   }
 
+  const defaultPath = await findWorkspaceDir(process.cwd()) ? './rent-data' : globalDir
+
   // sets output path and trims the text input
   const outputPath = config?.outputPath ?? (await text({
     message: 'Where would like you the data to be stored?',
-    placeholder: './rent-data',
-    defaultValue: './rent-data',
+    placeholder: defaultPath,
+    defaultValue: defaultPath,
   }) as string)?.trim()
 
   if (isCancel(outputPath)) {
