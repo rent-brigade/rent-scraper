@@ -29,7 +29,7 @@ export const getConfigFilePath = async (source: ListingsSource) => {
     }
   }
   const configDir = workspaceDir ?? globalDir
-  return source === 'redfin' ? `${configDir}/config.redfin.yaml` : `${configDir}/config.zillow.yaml`
+  return source === 'redfin' ? path.join(configDir, 'config.redfin.yaml') : path.join(configDir, 'config.zillow.yaml')
 }
 
 export const checkForConfigFile = async (source: ListingsSource) => {
