@@ -51,7 +51,9 @@ export const scrapeZillowListingResultsByZipCodes = async (zipCodes: number[], o
   const s = spinner()
   s.start('Scraping Zillow search results')
   for (let i = 1; i <= reruns + 1; i++) {
-    errors.add(`rerun ${i} of ${reruns}`)
+    if (reruns > 0 && i > 1) {
+      errors.add(`rerun ${i - 1} of ${reruns}`)
+    }
     // loop through zip codes and fetch data
     if (i === 1 || doRerun) {
       await Promise.all((doRerun ? rerunZipCodes : zipCodes).map(async (zipCode: number) => {
@@ -62,7 +64,7 @@ export const scrapeZillowListingResultsByZipCodes = async (zipCodes: number[], o
         } catch (error) {
           rerunZipCodes.push(zipCode)
           const { message } = parseError(error)
-          errors.add(message ?? `Error during fetch for ${zipCode}, ${error}`)
+          errors.add('scrape listing results error: ' + (message ?? `Error during fetch for ${zipCode}, ${error}`))
         }
       }))
     }

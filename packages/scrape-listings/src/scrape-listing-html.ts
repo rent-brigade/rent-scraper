@@ -108,7 +108,9 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
   s.start('Downloading listings html files')
 
   for (let i = 1; i <= reruns + 1; i++) {
-    errors.add(`rerun ${i} of ${reruns}`)
+    if (reruns > 0 && i > 1) {
+      errors.add(`rerun ${i - 1} of ${reruns}`)
+    }
     // loop through zip codes
     if (i === 1 || doRerun) {
       await Promise.all((doRerun ? rerunZipCodes : zipCodes).map(async (zipCode: number) => {
@@ -139,7 +141,7 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
                     await fetchListingHtmlByUrlAndExport(source, url, filePath, { timeoutMs })
                   } catch (error) {
                     const { message } = parseError(error)
-                    errors.add(message ?? `error fetching listing for id, ${error}`)
+                    errors.add('scrape listing html error: ' + (message ?? `error fetching listing for id, ${error}`))
                   }
                 }))
               } else {
@@ -149,7 +151,7 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
           } catch (error) {
             rerunZipCodes.push(zipCode)
             const { message } = parseError(error)
-            errors.add(message ?? `error reading json data, ${readFilePath}, ${error}`)
+            errors.add('scrape listing html error: ' + (message ?? `error reading json data, ${readFilePath}, ${error}`))
           }
         } else {
           if (debug) {
@@ -201,7 +203,9 @@ export const scrapeListingHtmlByZipCodesAndListingDetails = async (source: Listi
   const doRerun = rerunZipCodes.length
 
   for (let i = 1; i <= reruns + 1; i++) {
-    errors.add(`rerun ${i} of ${reruns}`)
+    if (reruns > 0 && i > 1) {
+      errors.add(`rerun ${i - 1} of ${reruns}`)
+    }
     // loop through zip codes
     if (i === 1 || doRerun) {
       await Promise.all((doRerun ? rerunZipCodes : zipCodes).map(async (zipCode: number) => {
@@ -216,7 +220,7 @@ export const scrapeListingHtmlByZipCodesAndListingDetails = async (source: Listi
           } catch (error) {
             rerunZipCodes.push(zipCode)
             const { message } = parseError(error)
-            errors.add(message ?? `Error during fetch for ${zipCode}, ${error}`)
+            errors.add('scrape listing html error: ' + (message ?? `Error during fetch for ${zipCode}, ${error}`))
           }
         } else {
           errors.add(`listing directory does not exist, ${listingDirectory}`)
@@ -269,7 +273,7 @@ export const scrapeListingHtmlByInputDirectory = async (source: ListingsSource, 
       await fetchListingHtmlByFilePaths(listingFilePaths)
     } catch (error) {
       const { message } = parseError(error)
-      errors.add(message ?? `Error during fetch for ${inputDirectory}, ${error}`)
+      errors.add('scrape listing html error: ' + (message ?? `Error during fetch for ${inputDirectory}, ${error}`))
     }
   } else {
     errors.add(`inputDirectory does not exist, ${inputDirectory}`)
