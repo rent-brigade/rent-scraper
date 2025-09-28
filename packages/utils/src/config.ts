@@ -176,10 +176,11 @@ export const updateConfigFile = async (source: ListingsSource, payload: any) => 
 }
 
 export const writeConfigFile = async (source: ListingsSource, config: ScrapeConfig) => {
-  const workspaceDir = await findWorkspaceDir(process.cwd()) ?? '.'
+  const workspaceDir = await findWorkspaceDir(process.cwd())
+  const configDir = workspaceDir ?? globalDir
   if (source === 'redfin') {
-    return await writeYamlFile(`${workspaceDir}/config.redfin.yaml`, config)
+    return await writeYamlFile(path.join(configDir, 'config.redfin.yaml'), config)
   } else {
-    return await writeYamlFile(`${workspaceDir}/config.zillow.yaml`, config)
+    return await writeYamlFile(path.join(configDir, 'config.zillow.yaml'), config)
   }
 }
