@@ -1,6 +1,6 @@
 {
   "name": "@rent-scraper/root",
-  "version": "1.0.13",
+  "version": "1.0.14-beta.1",
   "license": "MIT",
   "description": "Tools for scraping rent data",
   "files": [

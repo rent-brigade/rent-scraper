@@ -4,6 +4,9 @@ import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
 import type { BrowserKey } from '@rent-scraper/api'
 import axios from 'axios'
 import { spinner, log } from '@clack/prompts'
+import { mkdir } from 'fs/promises'
+import os from 'os'
+import path from 'path'
 
 export interface ScrapeConfig {
   outputPath: string
@@ -15,9 +18,18 @@ export interface ScrapeConfig {
   zillowCookie?: string
 }
 
+export const globalDir = path.join(os.homedir(), 'rent-scraper')
+
 export const getConfigFilePath = async (source: ListingsSource) => {
-  const workspaceDir = await findWorkspaceDir(process.cwd()) ?? '.'
-  return source === 'redfin' ? `${workspaceDir}/config.redfin.yaml` : `${workspaceDir}/config.zillow.yaml`
+  // uses global directory if using npx (not in the workspace)
+  const workspaceDir = await findWorkspaceDir(process.cwd())
+  if (!workspaceDir) {
+    if (!await checkForFile(globalDir)) {
+      await mkdir(globalDir, { recursive: true })
+    }
+  }
+  const configDir = workspaceDir ?? globalDir
+  return source === 'redfin' ? path.join(configDir, 'config.redfin.yaml') : path.join(configDir, 'config.zillow.yaml')
 }
 
 export const checkForConfigFile = async (source: ListingsSource) => {
@@ -164,10 +176,11 @@ export const updateConfigFile = async (source: ListingsSource, payload: any) => 
 }
 
 export const writeConfigFile = async (source: ListingsSource, config: ScrapeConfig) => {
-  const workspaceDir = await findWorkspaceDir(process.cwd()) ?? '.'
+  const workspaceDir = await findWorkspaceDir(process.cwd())
+  const configDir = workspaceDir ?? globalDir
   if (source === 'redfin') {
-    return await writeYamlFile(`${workspaceDir}/config.redfin.yaml`, config)
+    return await writeYamlFile(path.join(configDir, 'config.redfin.yaml'), config)
   } else {
-    return await writeYamlFile(`${workspaceDir}/config.zillow.yaml`, config)
+    return await writeYamlFile(path.join(configDir, 'config.zillow.yaml'), config)
   }
 }
