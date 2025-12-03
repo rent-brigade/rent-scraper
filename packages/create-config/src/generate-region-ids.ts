@@ -74,7 +74,7 @@ export async function generateZillowRegionIds() {
     const zipCodes = await getZipCodesFromConfig('zillow')
     // throw error if zip codes have not been added to config file.
     if (!zipCodes) {
-      return throwError('Zip codes must be added to config file.')
+      throwError('Zip codes must be added to config file.')
     }
 
     await checkForZillowBotFiltering()
@@ -104,7 +104,7 @@ export async function generateRedfinRegionIds() {
 
     // throw error if zip codes have not been added to config file.
     if (!zipCodes) {
-      return throwError('Zip codes must be added to config file.')
+      throwError('Zip codes must be added to config file.')
     }
 
     // loop through zip codes and fetch data

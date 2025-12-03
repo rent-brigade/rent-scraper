@@ -22,7 +22,7 @@ export const checkForZillowBotFiltering = async (options?: CheckForZillowBotFilt
   try {
     const zillowZipCodes = await getZillowZipCodes()
     if (!zillowZipCodes) {
-      return throwError('zip codes required, please run the createConfig script')
+      throwError('zip codes required, please run the createConfig script')
     }
     const { fetchListings = false } = options ?? {}
     const LA_COUNTY_REGION_ID = 3101
