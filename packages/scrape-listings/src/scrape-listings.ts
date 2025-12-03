@@ -96,7 +96,7 @@ export async function runScrapeListings() {
     const redfinZipCodes = await getRedfinZipCodes()
     for (let run = 1; run <= runs; run++) {
       if (!redfinZipCodes) {
-        return throwError('zip codes required, please run the createConfig script')
+        throwError('zip codes required, please run the createConfig script')
       }
       const zipCodes = redfinZipCodes
 
@@ -124,7 +124,7 @@ export async function runScrapeListings() {
     const zillowZipCodes = await getZillowZipCodes()
     for (let run = 1; run <= runs; run++) {
       if (!zillowZipCodes) {
-        return throwError('zip codes required, please run the createConfig script')
+        throwError('zip codes required, please run the createConfig script')
       }
       const zipCodes = zillowZipCodes
 

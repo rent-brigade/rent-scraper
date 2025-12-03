@@ -2,6 +2,7 @@ import dayjs from 'dayjs'
 import * as cheerio from 'cheerio'
 
 import { parseRedfinResponse } from './get-redfin-region-id.js'
+import { throwError } from '@rent-scraper/utils'
 
 export const getHtmlFromRedfinListingUrl = async (url: string): Promise<{ data: string }> => {
   const data = await fetchHtmlFromRedfinListingUrl(url)
@@ -89,6 +90,6 @@ export const fetchHtmlFromRedfinListingUrl = async (url: string, options?: Redfi
     return data
   } else {
     const message = JSON.parse(await response?.text())?.error ?? response?.statusText
-    throw new Error(message)
+    throwError(message)
   }
 }

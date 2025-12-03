@@ -2,6 +2,7 @@ import { checkForAndReadConfigFile, checkForZillowCookie, checkRequiredConfigVal
 import { log } from '@clack/prompts'
 import type { ListingsSource } from '@rent-scraper/api'
 import { runBrowserServer, runConfirmBrowserLaunch } from '@rent-scraper/browser-server'
+import { throwError } from '@rent-scraper/utils'
 
 export async function runCheckConfig(source: ListingsSource) {
   if (source === 'zillow') {
@@ -18,9 +19,12 @@ export async function runCheckConfig(source: ListingsSource) {
   }
 
   const config = await checkForAndReadConfigFile(source)
+  if (!config) {
+    throwError('config required')
+  }
   const errors = checkRequiredConfigValues(source, config, 'scrape')
   if (errors.length) {
     const error = `Required fields missing in config.${source}.yaml file: ${errors.join(', ')}`
-    throw new Error(error)
+    throwError(error)
   }
 }

@@ -16,7 +16,7 @@ export const isObject = (data: Record<string, unknown>): boolean => typeof data 
 
 export const isEmptyObject = (data: Record<string, unknown>): boolean => isObject(data) && Object.keys(data).length === 0
 
-export function throwError(message: string, status?: number): void {
+export function throwError(message: string, status?: number): never {
   throw new Error(JSON.stringify({ status: status ?? 400, message }))
 }
 
