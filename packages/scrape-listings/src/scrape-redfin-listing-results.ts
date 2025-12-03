@@ -33,10 +33,8 @@ export const scrapeRedfinListingResultsByZipCodes = async (zipCodes: number[], o
   const rerunZipCodes = [] as ZipCode[]
   const doRerun = rerunZipCodes.length
 
-  // make output directory if it doesn't exist
-  if (!await checkForFile(outputDirectory)) {
-    await mkdir(outputDirectory, { recursive: true })
-  }
+  // creates outputDirectory if it doesn't exit
+  await mkdir(outputDirectory, { recursive: true })
 
   for (let i = 1; i <= reruns + 1; i++) {
     if (reruns > 0 && i > 1) {
@@ -61,9 +59,8 @@ export const scrapeRedfinListingResultsByZipCodes = async (zipCodes: number[], o
 
   const redfinOutputPath = await getRedfinOutputPath()
   const logsDirectory = path.join(redfinOutputPath, 'redfin', 'logs')
-  if (!await checkForFile(logsDirectory)) {
-    await mkdir(logsDirectory, { recursive: true })
-  }
+  // creates logsDirectory if it doesn't exit
+  await mkdir(logsDirectory, { recursive: true })
 
   // write errors
   if (errors.get().filter(error => !error.includes('rerun ')).length > reruns) {

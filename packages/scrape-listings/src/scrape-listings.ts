@@ -4,7 +4,7 @@ import path from 'path'
 import axios from 'axios'
 import { mkdir, writeFile } from 'fs/promises'
 import { type ZipCode, checkForZillowBotFiltering, waitForSolvedZillowCaptcha } from '@rent-scraper/api'
-import { checkForFile, compareArrays, parseError, throwError } from '@rent-scraper/utils'
+import { compareArrays, parseError, throwError } from '@rent-scraper/utils'
 import type { ScrapeListingsByZipCodesOptions, ScrapeZillowListingsByZipCodesOptions } from './types.js'
 import { scrapeListingDetailsFromHtmlByZipCodes } from './scrape-listing-details-from-html.js'
 import { scrapeListingHtmlByZipCodes } from './scrape-listing-html.js'
@@ -107,9 +107,8 @@ export async function runScrapeListings() {
         const invalidZipCodes = compareArrays(zipCodes, validZipCodes)
         const invalidZipCodesData = invalidZipCodes.join('\n')
 
-        if (!await checkForFile(logsDirectory)) {
-          await mkdir(logsDirectory, { recursive: true })
-        }
+        // creates logsDirectory if it doesn't exit
+        await mkdir(logsDirectory, { recursive: true })
 
         // write results and logs
         const logScrapingResultsFileName = `${path.basename(resultsDirectory)}-scraping-results.txt`
@@ -136,9 +135,8 @@ export async function runScrapeListings() {
         const invalidZipCodes = compareArrays(zipCodes, validZipCodes)
         const invalidZipCodesData = invalidZipCodes.join('\n')
 
-        if (!await checkForFile(logsDirectory)) {
-          await mkdir(logsDirectory, { recursive: true })
-        }
+        // creates logsDirectory if it doesn't exit
+        await mkdir(logsDirectory, { recursive: true })
 
         // write results and logs
         const logScrapingResultsFileName = `${path.basename(resultsDirectory)}-scraping-results.txt`
