@@ -43,10 +43,8 @@ export const scrapeZillowListingResultsByZipCodes = async (zipCodes: number[], o
   const rerunZipCodes = [] as ZipCode[]
   const doRerun = rerunZipCodes.length
 
-  // make output directory if it doesn't exist
-  if (!await checkForFile(outputDirectory)) {
-    await mkdir(outputDirectory, { recursive: true })
-  }
+  // creates outputDirectory if it doesn't exist
+  await mkdir(outputDirectory, { recursive: true })
 
   const s = spinner()
   s.start('Scraping Zillow search results')
@@ -74,9 +72,8 @@ export const scrapeZillowListingResultsByZipCodes = async (zipCodes: number[], o
   log.message(path.join(zillowOutputPath, 'zillow', 'results', path.basename(outputDirectory)))
 
   const logsDirectory = path.join(zillowOutputPath, 'zillow', 'logs')
-  if (!await checkForFile(logsDirectory)) {
-    await mkdir(logsDirectory, { recursive: true })
-  }
+  // creates logsDirectory if it doesn't exit
+  await mkdir(logsDirectory, { recursive: true })
 
   // write errors
   if (errors.get().filter(error => !error.includes('rerun ')).length > reruns) {

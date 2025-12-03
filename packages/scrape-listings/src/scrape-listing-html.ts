@@ -122,11 +122,9 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
             if (!results) {
               errors.add(`empty file, ${readFilePath}`)
             } else {
-              // make output directory if it doesn't exist
+              // creates outputDirectory if it doesn't exist
               const outputSubDirectory = outputDirectory ? `${outputDirectory}/${zipCode}` : `${inputDirectory}/${zipCode}`
-              if (!await checkForFile(outputSubDirectory)) {
-                await mkdir(outputSubDirectory, { recursive: true })
-              }
+              await mkdir(outputSubDirectory, { recursive: true })
 
               if (results?.length) {
                 // loop through the listings and fetch the data
@@ -169,9 +167,8 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
   log.message(path.join(outputPath, source, 'listings', path.basename(inputDirectory)))
 
   const logsDirectory = path.join(outputPath, source, 'logs')
-  if (!await checkForFile(logsDirectory)) {
-    await mkdir(logsDirectory, { recursive: true })
-  }
+  // creates logsDirectory if it doesn't exit
+  await mkdir(logsDirectory, { recursive: true })
 
   // write errors
   if (errors.get().filter(error => !error.includes('rerun ')).length > reruns) {
@@ -233,9 +230,8 @@ export const scrapeListingHtmlByZipCodesAndListingDetails = async (source: Listi
   const redfinOutputPath = await getRedfinOutputPath()
   const outputPath = source === 'zillow' ? zillowOutputPath : redfinOutputPath
   const logsDirectory = path.join(outputPath, source, 'logs')
-  if (!await checkForFile(logsDirectory)) {
-    await mkdir(logsDirectory, { recursive: true })
-  }
+  // creates logsDirectory if it doesn't exit
+  await mkdir(logsDirectory, { recursive: true })
 
   // write errors
   if (errors.get().filter(error => !error.includes('rerun ')).length > reruns) {
@@ -260,9 +256,8 @@ export const scrapeListingHtmlByInputDirectory = async (source: ListingsSource, 
   if (!inputDirectory) {
     throwError('inputDirectory is required')
   }
-  if (!await checkForFile(outputDirectory)) {
-    await mkdir(outputDirectory, { recursive: true })
-  }
+  // creates outputDirectory if it doesn't exist
+  await mkdir(outputDirectory, { recursive: true })
 
   // check if inputDirectory exists
   if (await checkForFile(inputDirectory)) {
@@ -283,9 +278,9 @@ export const scrapeListingHtmlByInputDirectory = async (source: ListingsSource, 
   const redfinOutputPath = await getRedfinOutputPath()
   const outputPath = source === 'zillow' ? zillowOutputPath : redfinOutputPath
   const logsDirectory = path.join(outputPath, source, 'logs')
-  if (!await checkForFile(logsDirectory)) {
-    await mkdir(logsDirectory, { recursive: true })
-  }
+  // creates logsDirectory if it doesn't exit
+  await mkdir(logsDirectory, { recursive: true })
+
   const errorsFileName = `${path.basename(inputDirectory)}-html-errors.txt`
   const errorsPath = path.join(logsDirectory, errorsFileName)
 
@@ -308,9 +303,8 @@ export const scrapeListingHtmlByIds = async (source: ListingsSource, ids: string
   if (!outputDirectory) {
     throwError('outputDirectory is required')
   }
-  if (!await checkForFile(outputDirectory)) {
-    await mkdir(outputDirectory, { recursive: true })
-  }
+  // creates outputDirectory if it doesn't exist
+  await mkdir(outputDirectory, { recursive: true })
 
   await Promise.all(ids.map(async (id) => {
     const url = generateUrlFromId(source, id)

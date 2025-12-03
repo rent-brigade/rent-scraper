@@ -139,9 +139,8 @@ export const scrapeListingDetailsFromHtmlByZipCodes = async (source: ListingsSou
   log.message(path.join(outputPath, source, 'listings', path.basename(inputDirectory)))
 
   const logsDirectory = path.join(outputPath, source, 'logs')
-  if (!await checkForFile(logsDirectory)) {
-    await mkdir(logsDirectory, { recursive: true })
-  }
+  // creates logsDirectory if it doesn't exist
+  await mkdir(logsDirectory, { recursive: true })
 
   // write errors
   if (errors.get().length > 0) {
