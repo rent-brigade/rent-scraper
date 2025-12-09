@@ -9,20 +9,65 @@ import {
   log,
   tasks,
 } from '@clack/prompts'
-import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
+// import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
 import type { BrowserKey } from '@rent-scraper/api'
 import type { ListingsSource } from '@rent-scraper/api'
 import { parseAbsolutePath } from '@rent-scraper/utils'
 import type { ScrapeConfig } from '@rent-scraper/utils/config'
-import { globalDir, readConfigFile, writeConfigFile } from '@rent-scraper/utils/config'
+import { checkForPointerFile, getConfigFilePath, globalDir, readConfigFile, readPointerFile, writeConfigFile, writePointerFile } from '@rent-scraper/utils/config'
+import minimist from 'minimist'
 import path from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
 import color from 'picocolors'
+const args = minimist(process.argv.slice(2))
+const sourceArg = args.source
 
 const isValidZipCode = (zipCode: string) => /(^\d{5}$)|(^\d{5}-\d{4}$)/.test(zipCode)
 
 export async function runInitConfig(source?: ListingsSource) {
   intro(color.inverse(' create config '))
+
+  if (sourceArg) {
+    source = sourceArg
+  }
+
+  // const workspaceDir = await findWorkspaceDir(process.cwd())
+  const workspaceDir = null
+
+  if (!workspaceDir && (!await checkForPointerFile() || !source || !await readPointerFile(source))) {
+  // inititalize config
+    if (sourceArg) {
+      log.info(`Using source ${source === 'redfin' ? 'Redfin' : 'Zillow'}`)
+    } else {
+      source = await select({
+        message: 'Which listings would you like to scrape?',
+        initialValue: 'zillow',
+        options: [
+          { value: 'zillow', label: 'Zillow' },
+          { value: 'redfin', label: 'Redfin' },
+        ],
+      }) as ListingsSource
+
+      if (isCancel(source)) {
+        cancel('Operation cancelled')
+        return process.exit(1)
+      }
+    }
+
+    // creates pointer file and global config path
+    const configDirectory = (await text({
+      message: 'Where would like you to save the config file?',
+      placeholder: globalDir,
+      defaultValue: globalDir,
+    }) as string)?.trim()
+
+    await writePointerFile(source as ListingsSource, configDirectory)
+
+    if (isCancel(configDirectory)) {
+      cancel('Operation cancelled')
+      return process.exit(1)
+    }
+  }
 
   const config = source && await readConfigFile(source)
 
@@ -41,11 +86,11 @@ export async function runInitConfig(source?: ListingsSource) {
     return process.exit(1)
   }
 
-  const defaultPath = await findWorkspaceDir(process.cwd()) ? './rent-data' : globalDir
+  const defaultPath = path.dirname(await getConfigFilePath(source))
 
   // sets output path and trims the text input
   const outputPath = config?.outputPath ?? (await text({
-    message: 'Where would like you the data to be stored?',
+    message: 'Where would you like the data to be stored?',
     placeholder: defaultPath,
     defaultValue: defaultPath,
   }) as string)?.trim()
@@ -198,15 +243,15 @@ export async function runInitConfig(source?: ListingsSource) {
       title: 'Saving config to file',
       task: async () => {
         await sleep(3000)
-        await writeConfigFile(source, data)
-        return 'Saved config to file'
+        const filePath = await writeConfigFile(source, data)
+        return `Saved config to ${filePath}`
       },
     },
   ])
 
   await sleep(1000)
 
-  outro(`Config file saved!`)
+  outro('Config file saved!')
 
   await sleep(1000)
 

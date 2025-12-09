@@ -6,8 +6,9 @@ import { runRentScraper } from '../index.js'
 
 const args = minimist(process.argv.slice(2))
 const source = args.source ?? 'zillow'
+const configFilePath = args['config-file']
 
-runRentScraper(source)
+runRentScraper(source, configFilePath)
   .then(() => process.exit(0))
   .catch((error: any) => {
     const { message } = parseError(error)

@@ -15,6 +15,6 @@ export async function runCreateConfig(source?: ListingsSource) {
       await updateConfig(source)
     }
   } else {
-    await runInitConfig()
+    await runInitConfig(source)
   }
 }

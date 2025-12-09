@@ -1,12 +1,12 @@
 import type { ListingsSource } from '@rent-scraper/api'
 import { checkForFile, parseYamlFile, throwError, writeYamlFile } from '@rent-scraper/utils'
-import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
 import type { BrowserKey } from '@rent-scraper/api'
 import axios from 'axios'
 import { spinner, log } from '@clack/prompts'
-import { mkdir } from 'fs/promises'
+import { mkdir, stat } from 'fs/promises'
 import os from 'os'
 import path from 'path'
+import envPaths from 'env-paths'
 
 export interface ScrapeConfig {
   outputPath: string
@@ -17,37 +17,49 @@ export interface ScrapeConfig {
   browser?: BrowserKey
   zillowCookie?: string
 }
-
+const paths = envPaths('rent-scraper').config
+export const pointerFilePath = path.join(paths, 'config.yaml')
 export const globalDir = path.join(os.homedir(), 'rent-scraper')
 
 export const getConfigFilePath = async (source: ListingsSource) => {
-  // uses global directory if using npx (not in the workspace)
-  const workspaceDir = await findWorkspaceDir(process.cwd())
-  if (!workspaceDir) {
-    if (!await checkForFile(globalDir)) {
-      await mkdir(globalDir, { recursive: true })
+  // const workspaceDir = await findWorkspaceDir(process.cwd()
+  const workspaceDir = null
+  if (workspaceDir) {
+    return source === 'redfin' ? path.join(workspaceDir, 'config.redfin.yaml') : path.join(workspaceDir, 'config.zillow.yaml')
+  } else {
+    if (await checkForPointerFile()) {
+      return await readPointerFile(source)
     }
   }
-  const configDir = workspaceDir ?? globalDir
-  return source === 'redfin' ? path.join(configDir, 'config.redfin.yaml') : path.join(configDir, 'config.zillow.yaml')
 }
 
-export const checkForConfigFile = async (source: ListingsSource) => {
-  const configFile = await getConfigFilePath(source)
-  return await checkForFile(configFile)
+export const checkForConfigFile = async (source: ListingsSource, configFilePath?: string) => {
+  const configFile = configFilePath ?? await getConfigFilePath(source)
+  if (configFile) {
+    return await checkForFile(configFile)
+  }
+}
+
+export const checkForPointerFile = async () => {
+  return await checkForFile(pointerFilePath)
 }
 
 export const checkForAndReadConfigFile = async (source: ListingsSource) => {
   const configFile = await getConfigFilePath(source)
-  if (!await checkForFile(configFile)) {
-    throwError('Config file is required.')
+  if (configFile) {
+    if (!await checkForFile(configFile)) {
+      throwError('Config file is required.')
+    }
+    return await parseYamlFile(configFile) as ScrapeConfig
   }
-  return await parseYamlFile(configFile) as ScrapeConfig
 }
 
 export const resetZillowCookie = async () => {
-  const { zillowCookie, ...config } = await readConfigFile('zillow')
-  await writeConfigFile('zillow', config)
+  const configFile = await readConfigFile('zillow')
+  if (configFile) {
+    const { zillowCookie, ...config } = configFile ?? {}
+    await writeConfigFile('zillow', config)
+  }
 }
 
 export const waitForConfigFile = async (source: ListingsSource) => {
@@ -118,7 +130,7 @@ export const checkForZillowCookie = async () => {
   return await getValueFromConfigFile('zillow', 'zillowCookie')
 }
 
-export const checkRequiredConfigValues = (source: ListingsSource, config: ScrapeConfig, task = 'init') => {
+export const checkRequiredConfigValues = (source: ListingsSource, config?: ScrapeConfig, task = 'init') => {
   const { outputPath, zipCodes, browser, zillowCookie } = config ?? {}
   const errors = []
   if (!outputPath) {
@@ -149,7 +161,49 @@ export const stringifyZipCodes = (zipCodes: number[]) => {
 
 export const readConfigFile = async (source: ListingsSource) => {
   const configFile = await getConfigFilePath(source)
-  return await parseYamlFile(configFile) as ScrapeConfig
+  if (configFile) {
+    return await parseYamlFile(configFile) as ScrapeConfig
+  }
+}
+
+export const writePointerFile = async (source: ListingsSource, configDirectory: string, filename?: string) => {
+  if (!path.isAbsolute(configDirectory)) {
+    throwError('configDirectory must be an absolute path')
+  }
+
+  const stats = await stat(configDirectory).catch(() => null)
+  if (stats && !stats.isDirectory()) {
+    throwError(`${configDirectory} exists but is not a directory`)
+  }
+
+  // creates configDirectory if it doesn't exit
+  await mkdir(configDirectory, { recursive: true })
+
+  const pointerDirectory = path.dirname(pointerFilePath)
+
+  // creates pointerDirectory if it doesn't exit
+  await mkdir(pointerDirectory, { recursive: true })
+  // await writeFile(pointerFilePath, configDirectory)
+
+  filename = filename ?? `config.${source}.yaml`
+  const configFilePath = path.join(configDirectory, filename)
+  const configData = {
+    ...await parseYamlFile(pointerFilePath),
+    [source]: configFilePath,
+  }
+
+  await writeYamlFile(pointerFilePath, configData)
+  const pointer = await parseYamlFile(pointerFilePath) ?? {}
+  return pointer?.[source]
+}
+
+export const readPointerFile = async (source: ListingsSource) => {
+  try {
+    // get data from pointerFile
+    return (await parseYamlFile(pointerFilePath))?.[source]
+  } catch (err: any) {
+    console.error(`Failed to read pointer file at ${pointerFilePath}: ${err.message}`)
+  }
 }
 
 export const getOutputPathFromConfig = async (source: ListingsSource) => {
@@ -176,11 +230,7 @@ export const updateConfigFile = async (source: ListingsSource, payload: any) => 
 }
 
 export const writeConfigFile = async (source: ListingsSource, config: ScrapeConfig) => {
-  const workspaceDir = await findWorkspaceDir(process.cwd())
-  const configDir = workspaceDir ?? globalDir
-  if (source === 'redfin') {
-    return await writeYamlFile(path.join(configDir, 'config.redfin.yaml'), config)
-  } else {
-    return await writeYamlFile(path.join(configDir, 'config.zillow.yaml'), config)
-  }
+  const filePath = await getConfigFilePath(source)
+  await writeYamlFile(filePath, config)
+  return filePath
 }
