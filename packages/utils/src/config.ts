@@ -1,6 +1,7 @@
 import type { ListingsSource } from '@rent-scraper/api'
 import { checkForFile, parseYamlFile, throwError, writeYamlFile } from '@rent-scraper/utils'
 import type { BrowserKey } from '@rent-scraper/api'
+import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
 import axios from 'axios'
 import { spinner, log } from '@clack/prompts'
 import { mkdir, stat } from 'fs/promises'
@@ -22,8 +23,7 @@ export const pointerFilePath = path.join(paths, 'config.yaml')
 export const globalDir = path.join(os.homedir(), 'rent-scraper')
 
 export const getConfigFilePath = async (source: ListingsSource) => {
-  // const workspaceDir = await findWorkspaceDir(process.cwd()
-  const workspaceDir = null
+  const workspaceDir = await findWorkspaceDir(process.cwd())
   if (workspaceDir) {
     return source === 'redfin' ? path.join(workspaceDir, 'config.redfin.yaml') : path.join(workspaceDir, 'config.zillow.yaml')
   } else {

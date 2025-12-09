@@ -9,7 +9,7 @@ import {
   log,
   tasks,
 } from '@clack/prompts'
-// import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
+import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
 import type { BrowserKey } from '@rent-scraper/api'
 import type { ListingsSource } from '@rent-scraper/api'
 import { parseAbsolutePath } from '@rent-scraper/utils'
@@ -31,8 +31,7 @@ export async function runInitConfig(source?: ListingsSource) {
     source = sourceArg
   }
 
-  // const workspaceDir = await findWorkspaceDir(process.cwd())
-  const workspaceDir = null
+  const workspaceDir = await findWorkspaceDir(process.cwd())
 
   if (!workspaceDir && (!await checkForPointerFile() || !source || !await readPointerFile(source))) {
   // inititalize config
