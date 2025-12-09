@@ -14,7 +14,7 @@ import type { BrowserKey } from '@rent-scraper/api'
 import type { ListingsSource } from '@rent-scraper/api'
 import { parseAbsolutePath } from '@rent-scraper/utils'
 import type { ScrapeConfig } from '@rent-scraper/utils/config'
-import { checkForPointerFile, getConfigFilePath, globalDir, readConfigFile, readPointerFile, writeConfigFile, writePointerFile } from '@rent-scraper/utils/config'
+import { checkForConfigFile, checkForPointerFile, getConfigFilePath, globalDir, readConfigFile, readPointerFile, writeConfigFile, writePointerFile } from '@rent-scraper/utils/config'
 import minimist from 'minimist'
 import path from 'node:path'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -68,24 +68,26 @@ export async function runInitConfig(source?: ListingsSource) {
     }
   }
 
-  const config = source && await readConfigFile(source)
+  const config = source && await checkForConfigFile(source) ? await readConfigFile(source) : undefined
 
   // inititalize config
-  source = source ?? await select({
-    message: 'Which listings would you like to scrape?',
-    initialValue: 'zillow',
-    options: [
-      { value: 'zillow', label: 'Zillow' },
-      { value: 'redfin', label: 'Redfin' },
-    ],
-  }) as ListingsSource
+  source = config
+    ? source
+    : await select({
+      message: 'Which listings would you like to scrape?',
+      initialValue: 'zillow',
+      options: [
+        { value: 'zillow', label: 'Zillow' },
+        { value: 'redfin', label: 'Redfin' },
+      ],
+    }) as ListingsSource
 
   if (isCancel(source)) {
     cancel('Operation cancelled')
     return process.exit(1)
   }
 
-  const defaultPath = path.dirname(await getConfigFilePath(source))
+  const defaultPath = path.dirname(await getConfigFilePath(source as ListingsSource))
 
   // sets output path and trims the text input
   const outputPath = config?.outputPath ?? (await text({
@@ -242,7 +244,7 @@ export async function runInitConfig(source?: ListingsSource) {
       title: 'Saving config to file',
       task: async () => {
         await sleep(3000)
-        const filePath = await writeConfigFile(source, data)
+        const filePath = await writeConfigFile(source as ListingsSource, data)
         return `Saved config to ${filePath}`
       },
     },

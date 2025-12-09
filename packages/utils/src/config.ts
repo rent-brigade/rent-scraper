@@ -1,8 +1,8 @@
 import type { ListingsSource } from '@rent-scraper/api'
 import { checkForFile, parseYamlFile, throwError, writeYamlFile } from '@rent-scraper/utils'
 import type { BrowserKey } from '@rent-scraper/api'
-import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
 import axios from 'axios'
+import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
 import { spinner, log } from '@clack/prompts'
 import { mkdir, stat } from 'fs/promises'
 import os from 'os'
@@ -183,7 +183,6 @@ export const writePointerFile = async (source: ListingsSource, configDirectory: 
 
   // creates pointerDirectory if it doesn't exit
   await mkdir(pointerDirectory, { recursive: true })
-  // await writeFile(pointerFilePath, configDirectory)
 
   filename = filename ?? `config.${source}.yaml`
   const configFilePath = path.join(configDirectory, filename)
@@ -231,6 +230,7 @@ export const updateConfigFile = async (source: ListingsSource, payload: any) => 
 
 export const writeConfigFile = async (source: ListingsSource, config: ScrapeConfig) => {
   const filePath = await getConfigFilePath(source)
+  await mkdir(path.dirname(filePath), { recursive: true })
   await writeYamlFile(filePath, config)
   return filePath
 }
