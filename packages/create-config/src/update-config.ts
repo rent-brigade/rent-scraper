@@ -11,11 +11,14 @@ import { readConfigFile, writeConfigFile } from '@rent-scraper/utils/config'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { runInitConfig } from './init-config.js'
 import { rename } from 'node:fs/promises'
-import { parseAbsolutePath } from '@rent-scraper/utils'
+import { parseAbsolutePath, throwError } from '@rent-scraper/utils'
 import type { ScrapeConfig } from '@rent-scraper/utils/config'
 
 export async function updateConfig(source: ListingsSource) {
   const config = await readConfigFile(source)
+  if (!config) {
+    throwError('config required')
+  }
   const numZipCodes = config.zipCodes.split(', ').length
 
   const answers = [
@@ -61,14 +64,16 @@ export async function updateConfig(source: ListingsSource) {
 
   if (edit && Array.isArray(edit) && edit.length) {
     const data = await readConfigFile(source)
-    await sleep(1000)
-    await rename(parseAbsolutePath(`./config.${source}.yaml`), parseAbsolutePath(`./config.${source}.yaml.bak`))
-    for (const item of edit as keyof ScrapeConfig) {
-      delete data[item as keyof ScrapeConfig]
+    if (data) {
+      await sleep(1000)
+      await rename(parseAbsolutePath(`./config.${source}.yaml`), parseAbsolutePath(`./config.${source}.yaml.bak`))
+      for (const item of edit as keyof ScrapeConfig) {
+        delete data[item as keyof ScrapeConfig]
+      }
+      await sleep(1000)
+      await writeConfigFile(source, data)
+      await runInitConfig(source)
     }
-    await sleep(1000)
-    await writeConfigFile(source, data)
-    await runInitConfig(source)
   }
 
   if (status === 'new') {

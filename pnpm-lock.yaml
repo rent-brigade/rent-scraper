@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      env-paths:
+        specifier: ^3.0.0
+        version: 3.0.0
     devDependencies:
       '@eslint/js':
         specifier: ^9.30.1
@@ -62,7 +66,7 @@ importers:
     dependencies:
       '@clack/prompts':
         specifier: alpha
-        version: 1.0.0-alpha.4
+        version: 1.0.0-alpha.7
       '@rent-scraper/api':
         specifier: workspace:*
         version: link:../api
@@ -105,7 +109,7 @@ importers:
     dependencies:
       '@clack/prompts':
         specifier: alpha
-        version: 1.0.0-alpha.4
+        version: 1.0.0-alpha.7
       '@rent-scraper/api':
         specifier: workspace:*
         version: link:../api
@@ -154,7 +158,7 @@ importers:
         version: 3.883.0
       '@clack/prompts':
         specifier: alpha
-        version: 1.0.0-alpha.4
+        version: 1.0.0-alpha.7
       '@google-cloud/storage':
         specifier: ^7.16.0
         version: 7.17.0
@@ -203,7 +207,7 @@ importers:
     dependencies:
       '@clack/prompts':
         specifier: alpha
-        version: 1.0.0-alpha.4
+        version: 1.0.0-alpha.7
       '@rent-scraper/api':
         specifier: workspace:*
         version: link:../api
@@ -240,7 +244,7 @@ importers:
     dependencies:
       '@clack/prompts':
         specifier: alpha
-        version: 1.0.0-alpha.4
+        version: 1.0.0-alpha.7
       '@rent-scraper/api':
         specifier: workspace:*
         version: link:../api
@@ -253,6 +257,9 @@ importers:
       csv:
         specifier: ^6.3.11
         version: 6.4.1
+      env-paths:
+        specifier: ^3.0.0
+        version: 3.0.0
       yaml:
         specifier: ^2.8.0
         version: 2.8.1
@@ -422,11 +429,11 @@ packages:
     resolution: {integrity: sha512-D2hP9eA+Sqx1kBZgzxZh0y1trbuU+JoDkiEwqhQ36nodYqJwyEIhPSdMNd7lOm/4io72luTPWH20Yda0xOuUow==}
     engines: {node: '>=6.9.0'}
 
-  '@clack/core@1.0.0-alpha.4':
-    resolution: {integrity: sha512-VCtU+vjyKPMSakVrB9q1bOnXN7QW/w4+YQDQCOF59GrzydW+169i0fVx/qzRRXJgt8KGj/pZZ/JxXroFZIDByg==}
+  '@clack/core@1.0.0-alpha.7':
+    resolution: {integrity: sha512-3vdh6Ar09D14rVxJZIm3VQJkU+ZOKKT5I5cC0cOVazy70CNyYYjiwRj9unwalhESndgxx6bGc/m6Hhs4EKF5XQ==}
 
-  '@clack/prompts@1.0.0-alpha.4':
-    resolution: {integrity: sha512-KnmtDF2xQGoI5AlBme9akHtvCRV0RKAARUXHBQO2tMwnY8B08/4zPWigT7uLK25UPrMCEqnyQPkKRjNdhPbf8g==}
+  '@clack/prompts@1.0.0-alpha.7':
+    resolution: {integrity: sha512-BLB8LYOdfI4q6XzDl8la69J/y/7s0tHjuU1/5ak+o8yB2BPZBNE22gfwbFUIEmlq/BGBD6lVUAMR7w+1K7Pr6Q==}
 
   '@esbuild/aix-ppc64@0.25.9':
     resolution: {integrity: sha512-OaGtL73Jck6pBKjNIe24BnFE6agGl+6KxDtTfHhy1HmhthfKouEcOhqpSL64K4/0WCtbKFLOdzD/44cJ4k9opA==}
@@ -1680,6 +1687,10 @@ packages:
   env-paths@2.2.1:
     resolution: {integrity: sha512-+h1lkLKhZMTYjog1VEpJNG7NZJWcuc2DDk/qsqSTRRCOXiLjeQ1d1/udrUGhqMxUgAlwKNZ0cf2uqan5GLuS2A==}
     engines: {node: '>=6'}
+
+  env-paths@3.0.0:
+    resolution: {integrity: sha512-dtJUTepzMW3Lm/NPxRf3wP4642UWhjL2sQxc+ym2YMj1m/H2zDNQOlezafzkHwn6sMstjHTwG6iQQsctDW/b1A==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   environment@1.1.0:
     resolution: {integrity: sha512-xUtoPkMggbz0MPyPiIWr1Kp4aeWJjDZ6SMvURhimjdZgsRuDplF5/s9hcgGhyXMhs+6vpnuoiZ2kFiu3FMnS8Q==}
@@ -3571,14 +3582,14 @@ snapshots:
 
   '@babel/helper-validator-identifier@7.27.1': {}
 
-  '@clack/core@1.0.0-alpha.4':
+  '@clack/core@1.0.0-alpha.7':
     dependencies:
       picocolors: 1.1.1
       sisteransi: 1.0.5
 
-  '@clack/prompts@1.0.0-alpha.4':
+  '@clack/prompts@1.0.0-alpha.7':
     dependencies:
-      '@clack/core': 1.0.0-alpha.4
+      '@clack/core': 1.0.0-alpha.7
       picocolors: 1.1.1
       sisteransi: 1.0.5
 
@@ -4921,6 +4932,8 @@ snapshots:
   entities@6.0.1: {}
 
   env-paths@2.2.1: {}
+
+  env-paths@3.0.0: {}
 
   environment@1.1.0: {}
 
