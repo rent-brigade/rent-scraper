@@ -27,18 +27,16 @@ const isValidZipCode = (zipCode: string) => /(^\d{5}$)|(^\d{5}-\d{4}$)/.test(zip
 export async function runInitConfig(source?: ListingsSource) {
   intro(color.inverse(' create config '))
 
-  if (sourceArg) {
-    source = sourceArg
-  }
+  let selectedSource
 
   const workspaceDir = await findWorkspaceDir(process.cwd())
 
-  if (!workspaceDir && (!await checkForPointerFile() || !source || !await readPointerFile(source))) {
+  if (!workspaceDir && (!await checkForPointerFile() || !sourceArg || !await readPointerFile(sourceArg))) {
   // inititalize config
     if (sourceArg) {
-      log.info(`Using source ${source === 'redfin' ? 'Redfin' : 'Zillow'}`)
+      log.info(`Using source ${sourceArg === 'redfin' ? 'Redfin' : 'Zillow'}`)
     } else {
-      source = await select({
+      selectedSource = await select({
         message: 'Which listings would you like to scrape?',
         initialValue: 'zillow',
         options: [
@@ -47,11 +45,13 @@ export async function runInitConfig(source?: ListingsSource) {
         ],
       }) as ListingsSource
 
-      if (isCancel(source)) {
+      if (isCancel(selectedSource)) {
         cancel('Operation cancelled')
         return process.exit(1)
       }
     }
+
+    source = sourceArg ?? selectedSource ?? source
 
     // creates pointer file and global config path
     const configDirectory = (await text({
@@ -71,23 +71,21 @@ export async function runInitConfig(source?: ListingsSource) {
   const config = source && await checkForConfigFile(source) ? await readConfigFile(source) : undefined
 
   // inititalize config
-  source = config
-    ? source
-    : await select({
-      message: 'Which listings would you like to scrape?',
-      initialValue: 'zillow',
-      options: [
-        { value: 'zillow', label: 'Zillow' },
-        { value: 'redfin', label: 'Redfin' },
-      ],
-    }) as ListingsSource
+  source = source ?? await select({
+    message: 'Which listings would you like to scrape?',
+    initialValue: 'zillow',
+    options: [
+      { value: 'zillow', label: 'Zillow' },
+      { value: 'redfin', label: 'Redfin' },
+    ],
+  }) as ListingsSource
 
   if (isCancel(source)) {
     cancel('Operation cancelled')
     return process.exit(1)
   }
 
-  const defaultPath = path.dirname(await getConfigFilePath(source as ListingsSource))
+  const defaultPath = path.dirname(await getConfigFilePath(source))
 
   // sets output path and trims the text input
   const outputPath = config?.outputPath ?? (await text({
@@ -244,7 +242,7 @@ export async function runInitConfig(source?: ListingsSource) {
       title: 'Saving config to file',
       task: async () => {
         await sleep(3000)
-        const filePath = await writeConfigFile(source as ListingsSource, data)
+        const filePath = await writeConfigFile(source, data)
         return `Saved config to ${filePath}`
       },
     },
