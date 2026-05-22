@@ -3,7 +3,7 @@ import { closeBrowser, openBrowser } from './browser.js'
 import { updateConfigFile } from '@rent-scraper/utils/config'
 import { parseError } from '@rent-scraper/utils'
 
-export const getZillowCookie = async () => {
+export const getZillowCookie = async (): Promise<{ name: string, value: string } | undefined> => {
   const wsChromeEndpointurl = 'http://127.0.0.1:9222/json/version'
   const browser = await puppeteer.connect({
     browserURL: wsChromeEndpointurl,
@@ -15,9 +15,8 @@ export const getZillowCookie = async () => {
     return cookie
   } else {
     console.log('refetching cookie')
-    setTimeout(async () => {
-      await getZillowCookie()
-    }, 2000)
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    return await getZillowCookie()
   }
 }
 

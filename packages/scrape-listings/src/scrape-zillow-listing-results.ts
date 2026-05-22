@@ -6,10 +6,9 @@ import { type ScrapeZillowListingsByZipCodesOptions } from './types.js'
 import { getZillowOutputPath } from '@rent-scraper/api/config'
 import { log, spinner } from '@clack/prompts'
 
-const validZipCodes = [] as ZipCode[]
 const debug = process.env.DEBUG
 
-const fetchZillowListingResultsByZipCodeAndExport = async (zipCode: number, filePath: string, options?: ZillowListingResultsOptions) => {
+const fetchZillowListingResultsByZipCodeAndExport = async (zipCode: number, filePath: string, validZipCodes: ZipCode[], options?: ZillowListingResultsOptions) => {
   const { daysOnZillow, timeoutMs } = options ?? {}
   // skip if file already exists
   if (await checkForFile(filePath)) {
@@ -40,8 +39,8 @@ export const scrapeZillowListingResultsByZipCodes = async (zipCodes: number[], o
   // throw error if zillow bot filtering is enabled
   await checkForZillowBotFiltering({ fetchListings })
 
+  const validZipCodes = [] as ZipCode[]
   const rerunZipCodes = [] as ZipCode[]
-  const doRerun = rerunZipCodes.length
 
   // creates outputDirectory if it doesn't exist
   await mkdir(outputDirectory, { recursive: true })
@@ -53,12 +52,13 @@ export const scrapeZillowListingResultsByZipCodes = async (zipCodes: number[], o
       errors.add(`rerun ${i - 1} of ${reruns}`)
     }
     // loop through zip codes and fetch data
+    const doRerun = rerunZipCodes.length
     if (i === 1 || doRerun) {
       await Promise.all((doRerun ? rerunZipCodes : zipCodes).map(async (zipCode: number) => {
         const filename = `${zipCode}.json`
         const filePath = `${outputDirectory}/${filename}`
         try {
-          await fetchZillowListingResultsByZipCodeAndExport(zipCode, filePath, { daysOnZillow: daysListed, timeoutMs })
+          await fetchZillowListingResultsByZipCodeAndExport(zipCode, filePath, validZipCodes, { daysOnZillow: daysListed, timeoutMs })
         } catch (error) {
           rerunZipCodes.push(zipCode)
           const { message } = parseError(error)

@@ -18,7 +18,7 @@ const openBrowser = async (url?: string) => {
   await axios.post('http://localhost:8082/browser/open', { url })
 }
 
-export const checkForZillowBotFiltering = async (options?: CheckForZillowBotFilteringOptions) => {
+export const checkForZillowBotFiltering = async (options?: CheckForZillowBotFilteringOptions, attempt = 0) => {
   try {
     const zillowZipCodes = await getZillowZipCodes()
     if (!zillowZipCodes) {
@@ -32,8 +32,10 @@ export const checkForZillowBotFiltering = async (options?: CheckForZillowBotFilt
       await getZillowListingDetailsByZpid(zpid)
     } else if (detailUrl && !detailUrl.startsWith('/apartments')) {
       await fetchHtmlFromZillowListingUrl(detailUrl)
+    } else if (attempt < 5) {
+      await checkForZillowBotFiltering(options, attempt + 1)
     } else {
-      await checkForZillowBotFiltering()
+      throwError('Could not find a valid listing URL to check for bot filtering.')
     }
     return true
   } catch (error) {

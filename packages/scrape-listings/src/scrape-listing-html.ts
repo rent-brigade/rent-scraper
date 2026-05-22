@@ -102,7 +102,6 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
   }
 
   const rerunZipCodes = [] as ZipCode[]
-  const doRerun = rerunZipCodes.length
 
   const s = spinner()
   s.start('Downloading listings html files')
@@ -112,6 +111,7 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
       errors.add(`rerun ${i - 1} of ${reruns}`)
     }
     // loop through zip codes
+    const doRerun = rerunZipCodes.length
     if (i === 1 || doRerun) {
       await Promise.all((doRerun ? rerunZipCodes : zipCodes).map(async (zipCode: number) => {
         const readFilePath = `${inputDirectory}/${zipCode}.json`
@@ -128,7 +128,7 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
 
               if (results?.length) {
                 // loop through the listings and fetch the data
-                await Promise.all(await results.map(async (result: ZillowResult & RedfinResult) => {
+                await Promise.all(results.map(async (result: ZillowResult & RedfinResult) => {
                   try {
                     const { id, url } = parseIdAndUrlFromResult(result, source) ?? {}
                     if (!url) {
@@ -197,13 +197,13 @@ export const scrapeListingHtmlByZipCodesAndListingDetails = async (source: Listi
   }
 
   const rerunZipCodes = [] as ZipCode[]
-  const doRerun = rerunZipCodes.length
 
   for (let i = 1; i <= reruns + 1; i++) {
     if (reruns > 0 && i > 1) {
       errors.add(`rerun ${i - 1} of ${reruns}`)
     }
     // loop through zip codes
+    const doRerun = rerunZipCodes.length
     if (i === 1 || doRerun) {
       await Promise.all((doRerun ? rerunZipCodes : zipCodes).map(async (zipCode: number) => {
         const listingDirectory = `${inputDirectory}/${zipCode}`
