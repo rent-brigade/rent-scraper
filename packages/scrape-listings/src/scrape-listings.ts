@@ -151,7 +151,9 @@ export async function runScrapeListings() {
   }
   log.success('Scraping complete!')
 
-  if (source === 'zillow') {
-    await shutdownBrowserServer()
+  if (source === 'zillow' || source === 'redfin') {
+    if (await checkBrowserServer()) {
+      await shutdownBrowserServer()
+    }
   }
 }

@@ -96,3 +96,6 @@ google-oauth.json
 tokens.json
 
 config.*.yaml*
+
+zillow/*
+redfin/*

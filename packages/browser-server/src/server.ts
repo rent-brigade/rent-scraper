@@ -1,9 +1,10 @@
 import express from 'express'
 import minimist from 'minimist'
-import { getZillowCookie, saveZillowCookie } from './cookie.js'
+import { getZillowCookie, saveZillowCookie, saveRedfinCookie } from './cookie.js'
 import { launchBrowser, closeBrowser, getBrowser, shutdownBrowser, openBrowser } from './browser.js'
+import type { ListingsSource } from '@rent-scraper/api'
 
-export function runBrowserServer() {
+export function runBrowserServer(source: ListingsSource = 'zillow') {
   const app = express()
   const host = process.env.HOST ?? '127.0.0.1'
   const port = process.env.PORT ?? 8082
@@ -13,7 +14,7 @@ export function runBrowserServer() {
   const debug = args.debug
 
   const server = app.listen(Number(port), async () => {
-    await launchBrowser()
+    await launchBrowser(source)
     const connecting = setInterval(async () => {
       const browser = await getBrowser()
       if (browser?.connected) {
@@ -21,7 +22,12 @@ export function runBrowserServer() {
         if (debug) {
           console.log(`Browser listening at 127.0.0.1:9222`)
         }
-        await saveZillowCookie()
+        if (source === 'zillow') {
+          await saveZillowCookie()
+        } else if (source === 'redfin') {
+          await saveRedfinCookie()
+          await shutdownBrowser()
+        }
       }
     }, 1000)
     if (debug) {
@@ -80,6 +86,15 @@ export function runBrowserServer() {
   app.post('/cookie/save', async (_req, res) => {
     try {
       const cookie = await saveZillowCookie()
+      res.send({ cookie })
+    } catch (error) {
+      res.send(error)
+    }
+  })
+
+  app.post('/cookie/redfin/save', async (_req, res) => {
+    try {
+      const cookie = await saveRedfinCookie()
       res.send({ cookie })
     } catch (error) {
       res.send(error)

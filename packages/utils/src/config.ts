@@ -17,6 +17,7 @@ export interface ScrapeConfig {
   regionIds?: Record<number, number | null>
   browser?: BrowserKey
   zillowCookie?: string
+  redfinCookie?: string
 }
 const paths = envPaths('rent-scraper').config
 export const pointerFilePath = path.join(paths, 'config.yaml')
@@ -128,6 +129,22 @@ export const waitForZillowCookie = async () => {
 
 export const checkForZillowCookie = async () => {
   return await getValueFromConfigFile('zillow', 'zillowCookie')
+}
+
+export const waitForRedfinCookie = async () => {
+  return await new Promise((resolve) => {
+    const interval = setInterval(async () => {
+      const redfinCookie = await checkForRedfinCookie()
+      if (redfinCookie) {
+        resolve(redfinCookie)
+        clearInterval(interval)
+      }
+    }, 1000)
+  })
+}
+
+export const checkForRedfinCookie = async () => {
+  return await getValueFromConfigFile('redfin', 'redfinCookie')
 }
 
 export const checkRequiredConfigValues = (source: ListingsSource, config?: ScrapeConfig, task = 'init') => {

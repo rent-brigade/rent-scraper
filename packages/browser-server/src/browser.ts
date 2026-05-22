@@ -48,7 +48,7 @@ export const launchBrowser = async (source = 'zillow' as ListingsSource) => {
   }
 }
 
-export const openBrowser = async (url = 'https://zillow.com') => {
+export const openBrowser = async (url: string) => {
   const browser = await getBrowser()
   if (browser) {
     const pageUrl = url

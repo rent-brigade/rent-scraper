@@ -3,6 +3,7 @@ import * as cheerio from 'cheerio'
 
 import { parseRedfinResponse } from './get-redfin-region-id.js'
 import { throwError } from '@rent-scraper/utils'
+import { getRedfinCookie } from './config.js'
 
 export const getHtmlFromRedfinListingUrl = async (url: string): Promise<{ data: string }> => {
   const data = await fetchHtmlFromRedfinListingUrl(url)
@@ -65,9 +66,11 @@ export interface RedfinListingHtmlOptions {
 
 export const fetchHtmlFromRedfinListingUrl = async (url: string, options?: RedfinListingHtmlOptions): Promise<string> => {
   const { timeoutMs } = options ?? {}
-  const headers = {
+  const redfinCookie = await getRedfinCookie()
+  const headers: Record<string, string> = {
     'Content-Type': 'text/html; charset=utf-8',
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    ...(redfinCookie && { Cookie: redfinCookie }),
   }
 
   const newAbortSignal = (timeoutMs: number) => {
@@ -82,11 +85,15 @@ export const fetchHtmlFromRedfinListingUrl = async (url: string, options?: Redfi
   }
 
   const response = await fetch(url, config)
+  if (response.status === 202) {
+    throwError(`Redfin bot filtering (202) for ${url} — restart the browser server to refresh the cookie.`)
+  }
   if (response.ok) {
     const data = await response.text()
     return data
   } else {
-    const message = JSON.parse(await response?.text())?.error ?? response?.statusText
+    const body = await response.text().catch(() => '')
+    const message = (body && JSON.parse(body)?.error) ?? `${response.status} ${response.statusText}`
     throwError(message)
   }
 }
