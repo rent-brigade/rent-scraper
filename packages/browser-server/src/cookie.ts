@@ -12,6 +12,12 @@ export const getZillowCookie = async (attempt = 0): Promise<{ name: string, valu
   if (attempt === 0) {
     await openBrowser('https://www.zillow.com/homes/for_rent/')
   }
+  const pages = await browser.pages()
+  const title = pages?.[0] ? await pages[0].title() : ''
+  if (title.includes('Access to this page has been denied')) {
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    return await getZillowCookie(attempt + 1)
+  }
   const [cookie] = (await browser.cookies()).filter(cookie => cookie.name === '_pxvid')
   if (cookie) {
     await closeBrowser()
@@ -31,8 +37,10 @@ export const getRedfinCookie = async (attempt = 0): Promise<string | undefined> 
     await openBrowser('https://www.redfin.com')
     await new Promise(resolve => setTimeout(resolve, 3000))
   }
+  const pages = await browser.pages()
+  const title = pages?.[0] ? await pages[0].title() : ''
   const cookies = (await browser.cookies()).filter(cookie => cookie.domain.includes('redfin.com'))
-  if (cookies.some(cookie => cookie.name === 'aws-waf-token')) {
+  if (cookies.some(cookie => cookie.name === 'aws-waf-token') && title.includes('Redfin')) {
     await closeBrowser()
     return cookies.map(c => `${c.name}=${c.value}`).join('; ')
   } else {
