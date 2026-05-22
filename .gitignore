@@ -99,3 +99,5 @@ config.*.yaml*
 
 zillow/*
 redfin/*
+
+.claude/
