@@ -5,15 +5,14 @@ import { checkForFile, ErrorLog, parseError } from '@rent-scraper/utils'
 import { type ScrapeListingsByZipCodesOptions } from './types.js'
 import { getRedfinOutputPath } from '@rent-scraper/api/config'
 
-const validZipCodes = [] as ZipCode[]
-
-const fetchRedfinListingResultsByZipCodeAndExport = async (zipCode: number, filePath: string, options?: RedfinListingResultsOptions) => {
+const fetchRedfinListingResultsByZipCodeAndExport = async (zipCode: number, filePath: string, validZipCodes: ZipCode[], options?: RedfinListingResultsOptions) => {
   const { daysListed, timeoutMs } = options ?? {}
   // skip if file already exists
   if (await checkForFile(filePath)) {
     console.log(`${zipCode} exists, skipping`)
+    validZipCodes.push(zipCode)
   } else {
-  // fetch listing results from zillow (search data) and write to json file
+  // fetch listing results from redfin (search data) and write to json file
     const listings = await getRedfinListingResults({ zipCode, daysListed, timeoutMs })
     if (listings) {
       console.log(`writing ${filePath}`)
@@ -30,8 +29,8 @@ export const scrapeRedfinListingResultsByZipCodes = async (zipCodes: number[], o
 
   const errors = new ErrorLog()
 
+  const validZipCodes = [] as ZipCode[]
   const rerunZipCodes = [] as ZipCode[]
-  const doRerun = rerunZipCodes.length
 
   // creates outputDirectory if it doesn't exit
   await mkdir(outputDirectory, { recursive: true })
@@ -41,13 +40,14 @@ export const scrapeRedfinListingResultsByZipCodes = async (zipCodes: number[], o
       errors.add(`rerun ${i - 1} of ${reruns}`)
     }
     // loop through zip codes and fetch data
+    const doRerun = rerunZipCodes.length
     if (i === 1 || doRerun) {
       // loop through zip codes and fetch data
       await Promise.all((doRerun ? rerunZipCodes : zipCodes).map(async (zipCode: number) => {
         const filename = `${zipCode}.json`
         const filePath = `${outputDirectory}/${filename}`
         try {
-          await fetchRedfinListingResultsByZipCodeAndExport(zipCode, filePath, { daysListed, timeoutMs })
+          await fetchRedfinListingResultsByZipCodeAndExport(zipCode, filePath, validZipCodes, { daysListed, timeoutMs })
         } catch (error) {
           rerunZipCodes.push(zipCode)
           const { message } = parseError(error)

@@ -15,6 +15,7 @@ const fetchZillowListingResultsByZipCodeAndExport = async (zipCode: number, file
     if (debug) {
       log.warning(`${zipCode} exists, skipping`)
     }
+    validZipCodes.push(zipCode)
   } else {
   // fetch listing results from zillow (search data) and write to json file
     const listings = await getZillowListingResults({ zipCode, daysOnZillow, mergePageResults: true, timeoutMs })
