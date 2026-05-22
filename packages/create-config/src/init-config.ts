@@ -217,7 +217,6 @@ export async function runInitConfig(source?: ListingsSource) {
 
   const data = {
     outputPath: path.isAbsolute(outputPath) ? outputPath : parseAbsolutePath(outputPath),
-    ...(browser && { browser }),
     zipCodes: zipCodes.join(', '),
     daysListed: Number(daysListed),
   } as ScrapeConfig

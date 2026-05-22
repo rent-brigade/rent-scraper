@@ -8,4 +8,5 @@ export interface ScrapeListingsByZipCodesOptions {
 export interface ScrapeZillowListingsByZipCodesOptions extends ScrapeListingsByZipCodesOptions {
   altFetch?: boolean
   fetchListings?: boolean
+  skipBotCheck?: boolean
 }

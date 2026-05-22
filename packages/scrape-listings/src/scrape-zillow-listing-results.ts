@@ -34,11 +34,12 @@ const fetchZillowListingResultsByZipCodeAndExport = async (zipCode: number, file
 }
 
 export const scrapeZillowListingResultsByZipCodes = async (zipCodes: number[], outputDirectory: string, options?: ScrapeZillowListingsByZipCodesOptions) => {
-  const { daysListed, timeoutMs, run = 1, reruns = 0, fetchListings = false } = options ?? {}
+  const { daysListed, timeoutMs, run = 1, reruns = 0, fetchListings = false, skipBotCheck = false } = options ?? {}
   const errors = new ErrorLog()
 
-  // throw error if zillow bot filtering is enabled
-  await checkForZillowBotFiltering({ fetchListings })
+  if (!skipBotCheck) {
+    await checkForZillowBotFiltering({ fetchListings })
+  }
 
   const validZipCodes = [] as ZipCode[]
   const rerunZipCodes = [] as ZipCode[]
