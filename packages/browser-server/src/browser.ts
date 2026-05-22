@@ -43,6 +43,19 @@ const findNativeBrowser = async (): Promise<string | null> => {
 
 const wsChromeEndpointurl = 'http://127.0.0.1:9222/json/version'
 
+export const waitForBrowser = async (timeoutMs = 15000): Promise<void> => {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    try {
+      await puppeteer.connect({ browserURL: wsChromeEndpointurl })
+      return
+    } catch {
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+  }
+  throw new Error('timed out waiting for browser')
+}
+
 export const getBrowser = async () => {
   try {
     const browser = await puppeteer.connect({
