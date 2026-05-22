@@ -114,7 +114,7 @@ export const fetchZillowListingResults = async ({ page, daysOnZillow, regionId, 
       regionSelection,
       filterState: {
         sortSelection: { value: 'days' },
-        doz: { value: daysOnZillow ?? 5 },
+        doz: { value: String(daysOnZillow ?? 5) },
         isNewConstruction: { value: false },
         isForSaleForeclosure: { value: false },
         isForSaleByOwner: { value: false },
