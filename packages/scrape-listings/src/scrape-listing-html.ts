@@ -64,6 +64,7 @@ const fetchListingHtmlByFilePaths = async (inputFilePaths: string[], options?: Z
 interface ScrapeListingHtmlOptions extends ZillowListingHtmlOptions {
   run?: number
   reruns?: number
+  skipBotCheck?: boolean
 }
 
 interface ZillowResult {
@@ -89,15 +90,14 @@ const parseIdAndUrlFromResult = (result: ZillowResult & RedfinResult, source = '
 }
 
 export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCodes: number[], inputDirectory: string, outputDirectory = inputDirectory, options?: ScrapeListingHtmlOptions) => {
-  const { timeoutMs, run = 1, reruns = 0 } = options ?? {}
+  const { timeoutMs, run = 1, reruns = 0, skipBotCheck = false } = options ?? {}
   const errors = new ErrorLog()
 
   if (!inputDirectory) {
     throwError('inputDirectory is required')
   }
 
-  if (source === 'zillow') {
-    // throw error if zillow bot filtering is enabled
+  if (source === 'zillow' && !skipBotCheck) {
     await checkForZillowBotFiltering()
   }
 
@@ -183,7 +183,7 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
 }
 
 export const scrapeListingHtmlByZipCodesAndListingDetails = async (source: ListingsSource, zipCodes: number[], inputDirectory: string, options: ScrapeListingHtmlOptions) => {
-  const { timeoutMs, run = 1, reruns = 0 } = options ?? {}
+  const { timeoutMs, run = 1, reruns = 0, skipBotCheck = false } = options ?? {}
 
   const errors = new ErrorLog()
 
@@ -191,8 +191,7 @@ export const scrapeListingHtmlByZipCodesAndListingDetails = async (source: Listi
     throwError('inputDirectory is required')
   }
 
-  if (source === 'zillow') {
-    // throw error if zillow bot filtering is enabled
+  if (source === 'zillow' && !skipBotCheck) {
     await checkForZillowBotFiltering()
   }
 
@@ -245,11 +244,11 @@ export const scrapeListingHtmlByZipCodesAndListingDetails = async (source: Listi
   }
 }
 
-export const scrapeListingHtmlByInputDirectory = async (source: ListingsSource, inputDirectory: string, outputDirectory = inputDirectory) => {
+export const scrapeListingHtmlByInputDirectory = async (source: ListingsSource, inputDirectory: string, outputDirectory = inputDirectory, options?: Pick<ScrapeListingHtmlOptions, 'skipBotCheck'>) => {
+  const { skipBotCheck = false } = options ?? {}
   const errors = new ErrorLog()
 
-  if (source === 'zillow') {
-    // throw error if zillow bot filtering is enabled
+  if (source === 'zillow' && !skipBotCheck) {
     await checkForZillowBotFiltering()
   }
 
@@ -295,8 +294,9 @@ export const scrapeListingHtmlByInputDirectory = async (source: ListingsSource, 
 
 const generateUrlFromId = (source: ListingsSource, id: string) => source === 'redfin' ? `https://www.redfin.com/home/${id}` : source === 'zillow' ? `https://www.zillow.com/homedetails/${id}_zpid` : null
 
-export const scrapeListingHtmlByIds = async (source: ListingsSource, ids: string[], outputDirectory: string) => {
-  if (source === 'zillow') {
+export const scrapeListingHtmlByIds = async (source: ListingsSource, ids: string[], outputDirectory: string, options?: Pick<ScrapeListingHtmlOptions, 'skipBotCheck'>) => {
+  const { skipBotCheck = false } = options ?? {}
+  if (source === 'zillow' && !skipBotCheck) {
     await checkForZillowBotFiltering()
   }
 
