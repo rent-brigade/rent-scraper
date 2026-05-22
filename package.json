@@ -20,6 +20,7 @@
     "create-config": "pnpm run --silent --filter create-config start",
     "rent-scraper:dev": "pnpm run --filter rent-scraper dev",
     "rent-scraper": "pnpm run --silent --filter rent-scraper start",
+    "test": "pnpm run --parallel --if-present test",
     "typecheck": "pnpm run --parallel typecheck",
     "lint": "pnpm run --parallel lint",
     "lint:fix": "pnpm run --parallel lint:fix",

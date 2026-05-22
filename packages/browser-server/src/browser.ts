@@ -19,7 +19,7 @@ export const getBrowser = async () => {
 export const closeBrowser = async () => {
   const browser = await getBrowser()
   const pages = await browser?.pages()
-  pages?.forEach(async page => page.close())
+  if (pages) await Promise.all(pages.map(page => page.close()))
 }
 
 export const launchBrowser = async (source = 'zillow' as ListingsSource) => {
@@ -71,7 +71,6 @@ export const shutdownBrowser = async () => {
   const browser = await getBrowser()
   if (browser) {
     await browser.close()
-    await browser.disconnect()
     return { status: 'closed' }
   } else {
     return { status: 'not connected' }

@@ -12,7 +12,7 @@ export function runBrowserServer() {
   const args = minimist(process.argv.slice(2))
   const debug = args.debug
 
-  const server = app.listen(8082, async () => {
+  const server = app.listen(Number(port), async () => {
     await launchBrowser()
     const connecting = setInterval(async () => {
       const browser = await getBrowser()
@@ -77,7 +77,7 @@ export function runBrowserServer() {
     }
   })
 
-  app.get('/cookie/save', async (_req, res) => {
+  app.post('/cookie/save', async (_req, res) => {
     try {
       const cookie = await saveZillowCookie()
       res.send({ cookie })

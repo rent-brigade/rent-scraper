@@ -64,7 +64,7 @@ export const getZillowListingResults = async ({ page, daysOnZillow, regionId, zi
     return null
   }
 
-  const pages = mergePageResults && Array.from({ length: totalPages }, (v, k) => k + 1)
+  const pages = mergePageResults && Array.from({ length: totalPages }, (_, k) => k + 1)
 
   const results = mergePageResults && totalPages > 1 && pages ? (await Promise.all(pages?.map(async (page: number) => await fetchZillowListingResults({ page, daysOnZillow, regionId }, true)))).flat() : data?.cat1?.searchResults?.listResults
 
@@ -114,7 +114,7 @@ export const fetchZillowListingResults = async ({ page, daysOnZillow, regionId, 
       regionSelection,
       filterState: {
         sortSelection: { value: 'days' },
-        doz: { value: daysOnZillow ?? '5' },
+        doz: { value: daysOnZillow ?? 5 },
         isNewConstruction: { value: false },
         isForSaleForeclosure: { value: false },
         isForSaleByOwner: { value: false },
