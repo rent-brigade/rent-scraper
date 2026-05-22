@@ -47,7 +47,7 @@ export const fetchRedfinListingResults = async ({ regionId, timeoutMs }: RedfinL
 
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
   }
 
   const params = `?al=1&isRentals=true&market=socal&num_homes=350&ord=days-on-redfin-asc&page_number=1&region_id=${regionId}&region_type=2&sf=1,2,3,5,6,7&start=0&status=9&uipt=1,2,3,4&use_max_pins=true&v=8`

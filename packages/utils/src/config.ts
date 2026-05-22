@@ -1,6 +1,5 @@
 import type { ListingsSource } from '@rent-scraper/api'
 import { checkForFile, parseYamlFile, throwError, writeYamlFile } from '@rent-scraper/utils'
-import type { BrowserKey } from '@rent-scraper/api'
 import axios from 'axios'
 import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
 import { spinner, log } from '@clack/prompts'
@@ -15,7 +14,7 @@ export interface ScrapeConfig {
   zipCodes: string
   daysListed?: number
   regionIds?: Record<number, number | null>
-  browser?: BrowserKey
+  browser?: string
   zillowCookie?: string
   redfinCookie?: string
 }
@@ -156,16 +155,13 @@ export const checkForRedfinCookie = async () => {
 }
 
 export const checkRequiredConfigValues = (source: ListingsSource, config?: ScrapeConfig, task = 'init') => {
-  const { outputPath, zipCodes, browser, zillowCookie } = config ?? {}
+  const { outputPath, zipCodes, zillowCookie } = config ?? {}
   const errors = []
   if (!outputPath) {
     errors.push('outputPath')
   }
   if (!zipCodes) {
     errors.push('zipCodes')
-  }
-  if (source === 'zillow' && !browser) {
-    errors.push('browser')
   }
   if (task === 'scrape') {
     if (source === 'zillow' && !zillowCookie) {

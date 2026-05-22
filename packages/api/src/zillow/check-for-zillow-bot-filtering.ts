@@ -30,6 +30,8 @@ export const checkForZillowBotFiltering = async (options?: CheckForZillowBotFilt
     const { zpid, detailUrl } = results?.[0] ?? {}
     if (zpid && fetchListings) {
       await getZillowListingDetailsByZpid(zpid)
+    } else if (results?.length && !fetchListings) {
+      // search API returned results — not bot filtered, no need for HTML check
     } else if (detailUrl && !detailUrl.startsWith('/apartments')) {
       await fetchHtmlFromZillowListingUrl(detailUrl)
     } else if (attempt < 5) {

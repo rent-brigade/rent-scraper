@@ -56,7 +56,6 @@ export async function updateConfig(source: ListingsSource) {
     message: 'Which fields would you like to edit?',
     options: [
       { value: 'outputPath', label: 'Output path' },
-      { value: 'browser', label: 'Browser' },
       { value: 'zipCodes', label: 'Zip codes' },
     ],
     required: false,

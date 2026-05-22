@@ -12,13 +12,13 @@ const zillowListingHeaders = {
   'Cache-Control': 'no-cache',
   'Pragma': 'no-cache',
   'priority': 'u=1, i',
-  'sec-ch-ua': '"Not(A:Brand";v="99", "Google Chrome";v="133", "Chromium";v="133"',
+  'sec-ch-ua': '"Google Chrome";v="136", "Not(A:Brand";v="8", "Chromium";v="136"',
   'sec-ch-ua-mobile': '?0',
   'sec-ch-ua-platform': '"macOS"',
   'sec-fetch-dest': 'empty',
   'sec-fetch-mode': 'cors',
   'sec-fetch-site': 'same-origin',
-  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+  'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
   'x-z-enable-oauth-conversion': 'true',
 }
 

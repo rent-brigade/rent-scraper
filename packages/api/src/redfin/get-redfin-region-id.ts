@@ -25,7 +25,7 @@ export const fetchRedfinRegionIdByZipCode = async (zipCode: ZipCode): Promise<Re
 
   const headers = {
     'Content-Type': 'application/json; charset=utf-8',
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
   }
 
   const params = `?location=${zipCode}&v=2`

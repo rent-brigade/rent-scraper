@@ -10,7 +10,6 @@ import {
   tasks,
 } from '@clack/prompts'
 import { findWorkspaceDir } from '@pnpm/find-workspace-dir'
-import type { BrowserKey } from '@rent-scraper/api'
 import type { ListingsSource } from '@rent-scraper/api'
 import { parseAbsolutePath } from '@rent-scraper/utils'
 import type { ScrapeConfig } from '@rent-scraper/utils/config'
@@ -99,21 +98,7 @@ export async function runInitConfig(source?: ListingsSource) {
     return process.exit(1)
   }
 
-  const browser = config?.browser ?? (source === 'zillow'
-    ? await select({
-      message: 'Which browser would you use for scraping?',
-      initialValue: 'chrome',
-      options: [
-        { value: 'chrome', label: 'Google Chrome' },
-        { value: 'brave', label: 'Brave Browser' },
-      ],
-    }) as BrowserKey
-    : null)
-
-  if (isCancel(browser)) {
-    cancel('Operation cancelled')
-    return process.exit(1)
-  }
+  const browser = null
 
   const zipCodeResponse = config?.zipCodes ?? await text({
     message: 'What zip codes would you like to scrape?',

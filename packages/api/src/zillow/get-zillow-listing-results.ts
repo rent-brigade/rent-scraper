@@ -10,7 +10,7 @@ export const zillowListingResultsHeaders = {
   'Content-Type': 'application/json',
   'Cache-Control': 'no-cache',
   'Pragma': 'no-cache',
-  'Sec-Ch-Ua': '"Brave";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
+  'Sec-Ch-Ua': '"Google Chrome";v="136", "Not(A:Brand";v="8", "Chromium";v="136"',
   'Sec-Ch-Ua-Mobile': '?0',
   'Sec-Ch-Ua-Platform': '"macOS"',
   'Sec-Fetch-Dest': 'empty',
@@ -18,7 +18,7 @@ export const zillowListingResultsHeaders = {
   'Sec-Fetch-Site': 'same-origin',
   'Sec-Fetch-User': '?1',
   'Upgrade-Insecure-Requests': '1',
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36',
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
 }
 
 export interface ZillowListingResultsOptions {
