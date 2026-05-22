@@ -1,4 +1,4 @@
-import { access, readdir, writeFile } from 'fs/promises'
+import { readdir, stat, writeFile } from 'fs/promises'
 import fs, { readdirSync } from 'fs'
 import path from 'path'
 import { readFile } from 'fs/promises'
@@ -149,17 +149,13 @@ export const readFilesInDirectorySync = (directory: string, options?: ReadDirect
 
 export const checkForFile = async (filePath: string) => {
   try {
-    await access(filePath)
-    const file = await readFile(filePath)
-    if (file.length) return true
+    const s = await stat(filePath)
+    return s.isDirectory() || s.size > 0
   } catch (error: any) {
-    if (error?.code === 'EISDIR') {
-      return true
-    } else if (error?.code === 'ENOENT') {
+    if (error?.code === 'ENOENT') {
       return false
-    } else {
-      throw error
     }
+    throw error
   }
 }
 
