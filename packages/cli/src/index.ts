@@ -1,8 +1,7 @@
 import type { ListingsSource } from '@rent-scraper/api'
-import { checkForConfigFile, getConfigFilePath, checkBrowserServer, waitForBrowserServer, waitForZillowCookie, waitForRedfinCookie, checkForRedfinCookie, checkForZillowCookie } from '@rent-scraper/utils/config'
+import { checkForConfigFile, getConfigFilePath } from '@rent-scraper/utils/config'
 import { runCreateConfig, runCheckConfig, runGenerateRegionIds } from '@rent-scraper/create-config'
 import { runScrapeListings } from '@rent-scraper/scrape-listings'
-import { runBrowserServer } from '@rent-scraper/browser-server'
 import { cancel, confirm, isCancel, log } from '@clack/prompts'
 
 export async function runRentScraper(source: ListingsSource, configFilePath?: string) {
@@ -30,23 +29,6 @@ export async function runRentScraper(source: ListingsSource, configFilePath?: st
   // confirm config and generate regionIds if needed
   await runCheckConfig(source)
   await runGenerateRegionIds(source)
-
-  const needsCookie = source === 'zillow'
-    ? !await checkForZillowCookie()
-    : !await checkForRedfinCookie()
-
-  if (needsCookie) {
-    const running = await checkBrowserServer()
-    if (!running) {
-      runBrowserServer(source)
-      await waitForBrowserServer()
-    }
-    if (source === 'zillow') {
-      await waitForZillowCookie()
-    } else if (source === 'redfin') {
-      await waitForRedfinCookie()
-    }
-  }
 
   await runScrapeListings()
 }

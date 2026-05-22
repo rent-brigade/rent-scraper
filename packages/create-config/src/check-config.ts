@@ -1,4 +1,4 @@
-import { checkForAndReadConfigFile, checkForZillowCookie, checkRequiredConfigValues, resetZillowCookie, waitForBrowserServer, waitForZillowCookie } from '@rent-scraper/utils/config'
+import { checkForAndReadConfigFile, checkForZillowCookie, checkForRedfinCookie, checkRequiredConfigValues, resetZillowCookie, resetRedfinCookie, waitForBrowserServer, waitForZillowCookie, waitForRedfinCookie } from '@rent-scraper/utils/config'
 import { log } from '@clack/prompts'
 import type { ListingsSource } from '@rent-scraper/api'
 import { runBrowserServer, runConfirmBrowserLaunch } from '@rent-scraper/browser-server'
@@ -15,6 +15,16 @@ export async function runCheckConfig(source: ListingsSource) {
     if (!await checkForZillowCookie()) {
       log.info('Waiting for Zillow cookie')
       await waitForZillowCookie()
+    }
+  } else if (source === 'redfin') {
+    await resetRedfinCookie()
+    runBrowserServer('redfin')
+    log.info('Waiting for Server')
+    await waitForBrowserServer()
+
+    if (!await checkForRedfinCookie()) {
+      log.info('Waiting for Redfin cookie')
+      await waitForRedfinCookie()
     }
   }
 

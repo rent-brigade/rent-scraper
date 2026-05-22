@@ -63,6 +63,14 @@ export const resetZillowCookie = async () => {
   }
 }
 
+export const resetRedfinCookie = async () => {
+  const configFile = await readConfigFile('redfin')
+  if (configFile) {
+    const { redfinCookie, ...config } = configFile ?? {}
+    await writeConfigFile('redfin', config)
+  }
+}
+
 export const waitForConfigFile = async (source: ListingsSource) => {
   try {
     return await new Promise((resolve) => {
