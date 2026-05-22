@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { getZillowCookie } from './config.js'
 import type { RegionId, ZipCode } from '../types.js'
-import { getValueFromConfigFile } from '@rent-scraper/utils/config'
+import { getValueFromConfigFile, updateConfigFile } from '@rent-scraper/utils/config'
 import { isZillowBotFiltering } from './check-for-zillow-bot-filtering.js'
 import { parseError, throwError } from '@rent-scraper/utils'
 
@@ -13,8 +13,14 @@ export const getZillowRegionIdByZipCode = async (zipCode: ZipCode, options?: Zil
   const { fromFile = true } = options ?? {}
 
   if (fromFile) {
-    const zillowRegionIds = await getValueFromConfigFile('zillow', 'regionIds') as Record<string, number>
-    return zillowRegionIds[String(zipCode)] ?? await fetchZillowRegionIdByZipCode(zipCode)
+    const zillowRegionIds = (await getValueFromConfigFile('zillow', 'regionIds') as Record<string, number>) ?? {}
+    const cached = zillowRegionIds[String(zipCode)]
+    if (cached != null) return cached
+    const regionId = await fetchZillowRegionIdByZipCode(zipCode)
+    if (regionId != null) {
+      await updateConfigFile('zillow', { regionIds: { ...zillowRegionIds, [String(zipCode)]: regionId } })
+    }
+    return regionId
   } else {
     return await fetchZillowRegionIdByZipCode(zipCode)
   }
