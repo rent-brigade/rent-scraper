@@ -6,19 +6,19 @@ import type { RegionId, ZipCode } from '../types.js'
 
 export const zillowListingResultsHeaders = {
   'Accept': '*/*',
-  'Accept-Language': 'en-US,en;q=0.9',
+  'Accept-Language': 'en-US,en;q=0.5',
   'Content-Type': 'application/json',
-  'Cache-Control': 'no-cache',
-  'Pragma': 'no-cache',
-  'Sec-Ch-Ua': '"Brave";v="135", "Not-A.Brand";v="8", "Chromium";v="135"',
+  'Origin': 'https://www.zillow.com',
+  'Referer': 'https://www.zillow.com/',
+  'Priority': 'u=1, i',
+  'Sec-Ch-Ua': '"Brave";v="147", "Not.A/Brand";v="8", "Chromium";v="147"',
   'Sec-Ch-Ua-Mobile': '?0',
   'Sec-Ch-Ua-Platform': '"macOS"',
   'Sec-Fetch-Dest': 'empty',
   'Sec-Fetch-Mode': 'cors',
   'Sec-Fetch-Site': 'same-origin',
-  'Sec-Fetch-User': '?1',
-  'Upgrade-Insecure-Requests': '1',
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36',
+  'Sec-Gpc': '1',
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
 }
 
 export interface ZillowListingResultsOptions {
@@ -55,7 +55,7 @@ export const getZillowListingResults = async ({ page, daysOnZillow, regionId, zi
 
   page = (mergePageResults ? 1 : page) ?? 1
 
-  const data = await fetchZillowListingResults({ page, daysOnZillow, regionId, timeoutMs })
+  const data = await fetchZillowListingResults({ page, daysOnZillow, regionId, zipCode, timeoutMs })
   const totalResultCount = data?.cat1?.searchList?.totalResultCount
   const resultsPerPage = data?.cat1?.searchList?.resultsPerPage
   const totalPages = data?.cat1?.searchList?.totalPages
@@ -66,7 +66,7 @@ export const getZillowListingResults = async ({ page, daysOnZillow, regionId, zi
 
   const pages = mergePageResults && Array.from({ length: totalPages }, (_, k) => k + 1)
 
-  const results = mergePageResults && totalPages > 1 && pages ? (await Promise.all(pages?.map(async (page: number) => await fetchZillowListingResults({ page, daysOnZillow, regionId }, true)))).flat() : data?.cat1?.searchResults?.listResults
+  const results = mergePageResults && totalPages > 1 && pages ? (await Promise.all(pages?.map(async (page: number) => await fetchZillowListingResults({ page, daysOnZillow, regionId, zipCode }, true)))).flat() : data?.cat1?.searchResults?.listResults
 
   const urls = results?.map((result: { detailUrl?: string }) => result?.detailUrl)
   const numResults = results?.length
@@ -90,7 +90,7 @@ export const getZillowListingResults = async ({ page, daysOnZillow, regionId, zi
   }
 }
 
-export const fetchZillowListingResults = async ({ page, daysOnZillow, regionId, timeoutMs }: ZillowListingResultsOptions, resultsOnly?: boolean) => {
+export const fetchZillowListingResults = async ({ page, daysOnZillow, regionId, zipCode, timeoutMs }: ZillowListingResultsOptions, resultsOnly?: boolean) => {
   const baseUrl = 'https://www.zillow.com/async-create-search-page-state'
 
   const mapBounds = {
@@ -104,6 +104,7 @@ export const fetchZillowListingResults = async ({ page, daysOnZillow, regionId, 
   const regionSelection = [
     {
       regionId,
+      regionType: 7,
     },
   ]
   const body = {
@@ -125,6 +126,7 @@ export const fetchZillowListingResults = async ({ page, daysOnZillow, regionId, 
         isAllHomes: { value: true },
       },
       isListVisible: true,
+      ...(zipCode && { usersSearchTerm: String(zipCode) }),
     },
     wants: {
       cat1: [
