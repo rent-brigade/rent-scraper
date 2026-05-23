@@ -10,6 +10,7 @@ import { scrapeListingDetailsFromHtmlByZipCodes } from './scrape-listing-details
 import { scrapeListingHtmlByZipCodes } from './scrape-listing-html.js'
 import { scrapeZillowListingResultsByZipCodes } from './scrape-zillow-listing-results.js'
 import { scrapeRedfinListingResultsByZipCodes } from './scrape-redfin-listing-results.js'
+import { scrapeZillowListingsToCsv } from './scrape-listings-to-csv.js'
 import { getRedfinOutputPath, getRedfinZipCodes, getZillowOutputPath, getZillowZipCodes, getZillowDaysListed, getRedfinDaysListed } from '@rent-scraper/api/config'
 import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -130,8 +131,13 @@ export async function runScrapeListings() {
 
       const { numListings, validZipCodes } = await scrapeZillowListingsByZipCodes(zipCodes, resultsDirectory, listingsDirectory, { daysListed, timeoutMs, run, reruns })
       if (run === runs) {
+        const timestamp = path.basename(listingsDirectory)
+        const csvOutputPath = path.join(zillowOutputPath, 'zillow', 'csv', `${timestamp}.csv`)
+        const numCsvListings = await scrapeZillowListingsToCsv(listingsDirectory, csvOutputPath)
+        log.info(`CSV exported: ${numCsvListings} listings → ${csvOutputPath}`)
+
         // parse results data for text file output
-        const scrapingResultsData = Object.entries({ numListings }).map(([key, val]) => `${key}: ${val}`).join('\n')
+        const scrapingResultsData = Object.entries({ numListings, numCsvListings }).map(([key, val]) => `${key}: ${val}`).join('\n')
         const invalidZipCodes = compareArrays(zipCodes, validZipCodes)
         const invalidZipCodesData = invalidZipCodes.join('\n')
 

@@ -13,7 +13,7 @@ const CSV_HEADERS = [
   'price_at_source', 'platform_rent_estimate',
   'agent_name', 'agent_phone_number', 'broker_name', 'broker_phone_number',
   'is_owned_by_listing_platform',
-  'date_last_updated_at_source', 'date_scraped', 'date_processed', 'scrape_job_name',
+  'date_last_updated_at_source', 'date_scraped', 'scrape_job_name',
 ]
 
 const csvEscape = (val: unknown): string => {
@@ -78,7 +78,6 @@ const mapListingToRow = (data: any, scrapeJobName: string): Record<string, unkno
     is_owned_by_listing_platform: data.attributionInfo?.mlsName === 'Zillow Rentals',
     date_last_updated_at_source: data.attributionInfo?.lastUpdated || '',
     date_scraped: data.timestamp ? dayjs(data.timestamp).format('YYYY-MM-DD HH:mm:ss') : '',
-    date_processed: dayjs().format('YYYY-MM-DD HH:mm:ss'),
     scrape_job_name: scrapeJobName,
   }
 }
@@ -87,7 +86,12 @@ export const scrapeZillowListingsToCsv = async (listingsDirectory: string, outpu
   const scrapeJobName = path.basename(listingsDirectory)
   const rows: string[] = [CSV_HEADERS.join(',')]
 
-  const entries = await readdir(listingsDirectory, { withFileTypes: true })
+  let entries
+  try {
+    entries = await readdir(listingsDirectory, { withFileTypes: true })
+  } catch {
+    return 0
+  }
   const zipDirs = entries.filter(e => e.isDirectory()).map(e => e.name)
 
   for (const zipDir of zipDirs) {

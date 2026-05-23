@@ -13,7 +13,10 @@ const closeBrowser = async () => {
 export const runGenerateRegionIds = async (source: ListingsSource) => {
   try {
     const config = await checkForAndReadConfigFile(source)
-    if (config?.regionIds) {
+    const zipCodes = await getZipCodesFromConfig(source)
+    const regionIds = config?.regionIds as Record<string, number> | undefined
+    const allPresent = zipCodes?.every(z => regionIds?.[String(z)] != null)
+    if (allPresent) {
       log.success('Region Ids have been found in config...')
       return
     }
@@ -78,11 +81,17 @@ export async function generateZillowRegionIds() {
     }
 
     await checkForZillowBotFiltering()
-    // loop through zip codes and fetch data
-    const regionIds = Object.fromEntries((await Promise.all(zipCodes.map(async (zipCode: number) => {
+
+    // read existing cached region ids and only fetch missing ones
+    const existing = (await checkForAndReadConfigFile('zillow'))?.regionIds as Record<string, number> | undefined ?? {}
+    const missing = zipCodes.filter(z => existing[String(z)] == null)
+
+    const fetched = Object.fromEntries((await Promise.all(missing.map(async (zipCode: number) => {
       const regionId = await getZillowRegionIdByZipCode(zipCode, { fromFile: false })
       return [zipCode, regionId]
     }))).filter(x => x)) as Record<number, number | null>
+
+    const regionIds = { ...existing, ...fetched }
 
     const data = {
       zipCodes: stringifyZipCodes(zipCodes),
