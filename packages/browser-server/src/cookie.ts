@@ -5,20 +5,31 @@ import { parseError } from '@rent-scraper/utils'
 
 const wsChromeEndpointurl = 'http://127.0.0.1:9222/json/version'
 
-export const getZillowCookie = async (attempt = 0): Promise<string | undefined> => {
+export const getZillowCookie = async (attempt = 0, options?: { onCaptcha?: () => Promise<void> }): Promise<string | undefined> => {
   const browser = await puppeteer.connect({
     browserURL: wsChromeEndpointurl,
   })
   if (attempt === 0) {
     await openBrowser('https://www.zillow.com/homes/for_rent/')
   }
+  const pages = await browser.pages()
+  const title = pages?.[0] ? await pages[0].title() : ''
+  if (title.includes('Access to this page has been denied')) {
+    if (options?.onCaptcha) {
+      await options.onCaptcha()
+    } else {
+      await new Promise(resolve => setTimeout(resolve, 2000))
+    }
+    return await getZillowCookie(attempt + 1, options)
+  }
   const allCookies = await browser.cookies()
-  const pxvid = allCookies.find(c => c.name === '_pxvid')
-  const px3 = allCookies.find(c => c.name === '_px3')
-  if (pxvid && px3) {
+  const zillowCookies = allCookies.filter(c => c.domain?.includes('zillow.com'))
+  const hasPxvid = zillowCookies.some(c => c.name === '_pxvid')
+  if (hasPxvid) {
     await closeBrowser()
-    return `${pxvid.name}=${pxvid.value}; ${px3.name}=${px3.value}`
+    return zillowCookies.map(c => `${c.name}=${c.value}`).join('; ')
   } else {
+    console.log('refetching zillow cookie')
     await new Promise(resolve => setTimeout(resolve, 2000))
     return await getZillowCookie(attempt + 1)
   }
@@ -57,9 +68,9 @@ export const saveRedfinCookie = async () => {
   }
 }
 
-export const saveZillowCookie = async () => {
+export const saveZillowCookie = async (options?: { onCaptcha?: () => Promise<void> }) => {
   try {
-    const zillowCookie = await getZillowCookie()
+    const zillowCookie = await getZillowCookie(0, options)
     if (zillowCookie) {
       await updateConfigFile('zillow', { zillowCookie })
     }
