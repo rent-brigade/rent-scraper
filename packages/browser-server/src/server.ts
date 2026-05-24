@@ -1,6 +1,6 @@
 import express from 'express'
 import minimist from 'minimist'
-import { getZillowCookie, saveZillowCookie, saveRedfinCookie } from './cookie.js'
+import { getZillowCookie, saveZillowCookie, saveRedfinCookie, refreshZillowCookie } from './cookie.js'
 import { launchBrowser, closeBrowser, getBrowser, shutdownBrowser, openBrowser } from './browser.js'
 import type { ListingsSource } from '@rent-scraper/api'
 
@@ -77,6 +77,15 @@ export function runBrowserServer(source: ListingsSource = 'zillow') {
   app.get('/cookie', async (_req, res) => {
     try {
       const cookie = await getZillowCookie()
+      res.send({ cookie })
+    } catch (error) {
+      res.send(error)
+    }
+  })
+
+  app.post('/cookie/refresh', async (_req, res) => {
+    try {
+      const cookie = await refreshZillowCookie()
       res.send({ cookie })
     } catch (error) {
       res.send(error)

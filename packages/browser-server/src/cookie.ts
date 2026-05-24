@@ -60,16 +60,29 @@ export const saveRedfinCookie = async () => {
   }
 }
 
+export const refreshZillowCookie = async () => {
+  try {
+    const browser = await puppeteer.connect({ browserURL: wsChromeEndpointurl })
+    const allCookies = await browser.cookies()
+    const [pxvid] = allCookies.filter(c => c.name === '_pxvid')
+    const [px3] = allCookies.filter(c => c.name === '_px3')
+    if (pxvid) {
+      const zillowCookie = [pxvid, px3].filter(Boolean).map(c => `${c.name}=${c.value}`).join('; ')
+      await updateConfigFile('zillow', { zillowCookie })
+      return zillowCookie
+    }
+  } catch (error: any) {
+    const { status, message } = parseError(error)
+    console.error(status, message)
+  }
+}
+
 export const saveZillowCookie = async () => {
   try {
-    const zillowCookie = await getZillowCookie() ?? {}
-
-    const data = {
-      zillowCookie,
+    const zillowCookie = await getZillowCookie()
+    if (zillowCookie) {
+      await updateConfigFile('zillow', { zillowCookie })
     }
-
-    // update config file
-    await updateConfigFile('zillow', data)
   } catch (error: any) {
     const { status, message } = parseError(error)
     console.error(status, message)

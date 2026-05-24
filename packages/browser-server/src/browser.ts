@@ -112,12 +112,13 @@ export const openBrowser = async (url: string) => {
     const page = pages?.[0] ?? await browser.newPage()
     const pageTitle = await page.title()
     // do not change page if captcha is showing
-    if (!pageTitle.includes('denied')) {
-      await page.goto(pageUrl, {
-        waitUntil: 'load',
-      })
+    if (pageTitle.includes('denied')) {
+      return { status: 'captcha' }
     }
-    return { status: 'opened' }
+    await page.goto(pageUrl, {
+      waitUntil: 'load',
+    })
+    return { status: 'navigated' }
   } else {
     return { status: 'not connected' }
   }

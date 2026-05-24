@@ -15,7 +15,12 @@ interface CheckForZillowBotFilteringOptions {
 }
 
 const openBrowser = async (url?: string) => {
-  await axios.post('http://localhost:8082/browser/open', { url })
+  const { data } = await axios.post('http://localhost:8082/browser/open', { url })
+  return data?.browser as { status: 'navigated' | 'captcha' | 'not connected' } | undefined
+}
+
+const refreshCookie = async () => {
+  await axios.post('http://localhost:8082/cookie/refresh')
 }
 
 export const checkForZillowBotFiltering = async (options?: CheckForZillowBotFilteringOptions, attempt = 0) => {
@@ -49,18 +54,24 @@ export const checkForZillowBotFiltering = async (options?: CheckForZillowBotFilt
 }
 
 export const waitForSolvedZillowCaptcha = async () => {
-  return await new Promise((resolve) => {
-    const interval = setInterval(async () => {
-      try {
-        await openBrowser('https://www.zillow.com/homes/for_rent/')
+  let captchaSeen = false
+  while (true) {
+    try {
+      const result = await openBrowser('https://www.zillow.com/homes/for_rent/')
+      if (result?.status === 'captcha') {
+        captchaSeen = true
+      } else if (captchaSeen && result?.status === 'navigated') {
+        // captcha was showing and is now gone — refresh cookie to pick up new _px3
+        await refreshCookie()
         const solved = await checkForZillowBotFiltering()
-        if (solved) {
-          resolve(solved)
-          clearInterval(interval)
-        }
-      } catch {
-        // don't log the error
+        if (solved) return solved
+      } else if (!captchaSeen) {
+        const solved = await checkForZillowBotFiltering()
+        if (solved) return solved
       }
-    }, 500)
-  })
+    } catch {
+      // don't log the error
+    }
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
 }
