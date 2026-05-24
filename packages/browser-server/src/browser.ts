@@ -3,7 +3,7 @@ import { access, mkdtemp } from 'fs/promises'
 import { exec } from 'child_process'
 import { tmpdir } from 'os'
 import path from 'path'
-import { checkForConfigFile, waitForConfigFile } from '@rent-scraper/utils/config'
+import { checkForConfigFile, waitForConfigFile, getValueFromConfigFile } from '@rent-scraper/utils/config'
 import type { ListingsSource } from '@rent-scraper/api'
 
 const nativeBrowserPaths: Partial<Record<NodeJS.Platform, string[]>> = {
@@ -82,7 +82,10 @@ export const launchBrowser = async (source = 'zillow' as ListingsSource) => {
     await waitForConfigFile(source)
   }
   const userDataDir = await mkdtemp(path.join(tmpdir(), 'chrome-remote-'))
-  const nativePath = await findNativeBrowser()
+  const browserPref = await getValueFromConfigFile(source, 'browser') as string | null
+  const nativePath = browserPref
+    ? (nativeBrowserPaths[process.platform] ?? []).find(p => p.toLowerCase().includes(browserPref.toLowerCase())) ?? await findNativeBrowser()
+    : await findNativeBrowser()
   console.log(`launching browser: ${nativePath ?? 'bundled chromium'}`)
   if (nativePath) {
     exec(`"${nativePath}" --remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir="${userDataDir}"`, (error) => {
