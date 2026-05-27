@@ -17,6 +17,16 @@ const scrapeZillowListingHtmlByFilePathAndExport = async (inputFilePath: string)
         log.message(`scraping data for ${inputFilePath}`)
       }
       const html = (await readFile(inputFilePath)).toString()
+      if (!html || html.trim() === '') {
+        // empty file from a previous bad fetch — delete so it can be retried
+        await unlink(inputFilePath)
+        throwError(`empty file found at ${inputFilePath}, deleted for retry`)
+      }
+      if (html.includes('px-captcha')) {
+        // bad file from a previous bot-filtered fetch — delete so it can be retried
+        await unlink(inputFilePath)
+        throwError(`captcha page found in ${inputFilePath}, deleted for retry`)
+      }
       const data = await scrapeDataFromZillowListingHtml(html)
       // rescrape if no history and a bestMatchedUnit url is available
       if (!data?.priceHistory && data?.bestMatchedUnit?.hdpUrl) {
@@ -36,13 +46,8 @@ const scrapeZillowListingHtmlByFilePathAndExport = async (inputFilePath: string)
           await unlink(outputFilePath)
         }
         const url = `https://www.zillow.com${data?.bestMatchedUnit?.hdpUrl}`
-        try {
-          await fetchListingHtmlByUrlAndExport('zillow', url, inputFilePath)
-          await scrapeZillowListingHtmlByFilePathAndExport(inputFilePath)
-        } catch (error) {
-          const { message } = parseError(error)
-          log.error(message)
-        }
+        await fetchListingHtmlByUrlAndExport('zillow', url, inputFilePath)
+        await scrapeZillowListingHtmlByFilePathAndExport(inputFilePath)
       } else {
         if (!data) {
           throwError(`problem scraping data for ${inputFilePath}`)
@@ -88,9 +93,25 @@ const scrapeRedfinListingHtmlByFilePathAndExport = async (inputFilePath: string)
   }
 }
 
-export const scrapeListingDetailsFromHtmlByFilePaths = async (source: ListingsSource, inputFilePaths: string[]) => {
-  // loop through files and fetch html
-  await Promise.all(inputFilePaths.map(async inputFilePath => source === 'redfin' ? await scrapeRedfinListingHtmlByFilePathAndExport(inputFilePath) : await scrapeZillowListingHtmlByFilePathAndExport(inputFilePath)))
+export const scrapeListingDetailsFromHtmlByFilePaths = async (source: ListingsSource, inputFilePaths: string[], errors?: ErrorLog) => {
+  // loop through files and fetch html; returns count of successfully parsed listings
+  const results = await Promise.all(inputFilePaths.map(async (inputFilePath) => {
+    try {
+      if (source === 'redfin') {
+        await scrapeRedfinListingHtmlByFilePathAndExport(inputFilePath)
+      } else {
+        await scrapeZillowListingHtmlByFilePathAndExport(inputFilePath)
+      }
+      // count it if the output json file exists
+      const outputFilePath = inputFilePath.replace('.html', '.json')
+      return await checkForFile(outputFilePath) ? 1 : 0
+    } catch (error) {
+      const { message } = parseError(error)
+      errors?.add(message)
+      return 0
+    }
+  }))
+  return results.reduce<number>((sum, n) => sum + n, 0)
 }
 
 export const scrapeListingDetailsFromHtmlByZipCodes = async (source: ListingsSource, zipCodes: number[], inputDirectory: string) => {
@@ -124,9 +145,9 @@ export const scrapeListingDetailsFromHtmlByZipCodes = async (source: ListingsSou
       if (await checkForFile(listingDirectory)) {
       // get list of json files in current directory
         const listingHtmlFilePaths = await readFilesInDirectory(listingDirectory, { extension: '.html', prependDirectory: true })
-        // fetch the listing html for each file
-        numListings = numListings + listingHtmlFilePaths.length
-        await scrapeListingDetailsFromHtmlByFilePaths(source, listingHtmlFilePaths)
+        // fetch the listing html for each file; count only successfully parsed listings
+        const parsed = await scrapeListingDetailsFromHtmlByFilePaths(source, listingHtmlFilePaths, errors)
+        numListings = numListings + parsed
       } else {
         errors.add(`listing directory does not exist, ${listingDirectory}`)
       }
@@ -135,8 +156,12 @@ export const scrapeListingDetailsFromHtmlByZipCodes = async (source: ListingsSou
   const zillowOutputPath = await getZillowOutputPath()
   const redfinOutputPath = await getRedfinOutputPath()
   const outputPath = source === 'zillow' ? zillowOutputPath : redfinOutputPath
-  p.stop('Listings data has been saved to:')
-  log.message(path.join(outputPath, source, 'listings', path.basename(inputDirectory)))
+  if (numListings > 0) {
+    p.stop('Listings data has been saved to:')
+    log.message(path.join(outputPath, source, 'listings', path.basename(inputDirectory)))
+  } else {
+    p.stop('No listings data saved.')
+  }
 
   const logsDirectory = path.join(outputPath, source, 'logs')
   // creates logsDirectory if it doesn't exist

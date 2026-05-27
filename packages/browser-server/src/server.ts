@@ -1,7 +1,8 @@
 import express from 'express'
 import minimist from 'minimist'
 import { getZillowCookie, saveZillowCookie, saveRedfinCookie, refreshZillowCookie } from './cookie.js'
-import { launchBrowser, closeBrowser, getBrowser, shutdownBrowser, openBrowser } from './browser.js'
+import { launchBrowser, closeBrowser, getBrowser, shutdownBrowser, openBrowser, getBrowserStatus } from './browser.js'
+import { solveZillowCaptcha } from './solve-captcha.js'
 import type { ListingsSource } from '@rent-scraper/api'
 
 export function runBrowserServer(source: ListingsSource = 'zillow') {
@@ -64,6 +65,15 @@ export function runBrowserServer(source: ListingsSource = 'zillow') {
     }
   })
 
+  app.post('/browser/status', async (_req, res) => {
+    try {
+      const browser = await getBrowserStatus()
+      res.send({ browser })
+    } catch (error) {
+      res.send(error)
+    }
+  })
+
   app.post('/browser/open', async (req, res) => {
     try {
       const { url } = req?.body ?? {}
@@ -105,6 +115,15 @@ export function runBrowserServer(source: ListingsSource = 'zillow') {
     try {
       const cookie = await saveRedfinCookie()
       res.send({ cookie })
+    } catch (error) {
+      res.send(error)
+    }
+  })
+
+  app.post('/captcha/solve', async (_req, res) => {
+    try {
+      const solved = await solveZillowCaptcha()
+      res.send({ solved })
     } catch (error) {
       res.send(error)
     }

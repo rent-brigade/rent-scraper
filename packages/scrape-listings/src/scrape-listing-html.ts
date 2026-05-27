@@ -1,9 +1,10 @@
 import { mkdir, readFile, writeFile } from 'fs/promises'
 import path from 'path'
-import { type ZipCode, type ListingsSource, fetchHtmlFromZillowListingUrl, type ZillowListingHtmlOptions, checkForZillowBotFiltering, fetchHtmlFromRedfinListingUrl } from '@rent-scraper/api'
+import { type ZipCode, type ListingsSource, fetchHtmlFromZillowListingUrl, type ZillowListingHtmlOptions, checkForZillowBotFiltering, fetchHtmlFromRedfinListingUrl, isZillowBotFiltering } from '@rent-scraper/api'
 import { ErrorLog, parseError, parseJsonFile, throwError, checkForFile, readFilesInDirectory } from '@rent-scraper/utils'
 import { getRedfinOutputPath, getZillowOutputPath } from '@rent-scraper/api/config'
 import { log, spinner } from '@clack/prompts'
+import { setTimeout as sleep } from 'node:timers/promises'
 
 const debug = process.env.DEBUG
 
@@ -102,6 +103,7 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
   }
 
   const rerunZipCodes = [] as ZipCode[]
+  const failedFetches = [] as { url: string, filePath: string }[]
 
   const s = spinner()
   s.start('Downloading listings html files')
@@ -129,16 +131,20 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
               if (results?.length) {
                 // loop through the listings and fetch the data
                 await Promise.all(results.map(async (result: ZillowResult & RedfinResult) => {
+                  const { id, url } = parseIdAndUrlFromResult(result, source) ?? {}
+                  if (!url) {
+                    return errors.add(`url missing for ${id}`)
+                  }
+                  const filename = `${id}.html`
+                  const filePath = `${outputSubDirectory}/${filename}`
                   try {
-                    const { id, url } = parseIdAndUrlFromResult(result, source) ?? {}
-                    if (!url) {
-                      return errors.add(`url missing for ${id}`)
-                    }
-                    const filename = `${id}.html`
-                    const filePath = `${outputSubDirectory}/${filename}`
                     await fetchListingHtmlByUrlAndExport(source, url, filePath, { timeoutMs })
                   } catch (error) {
-                    const { message } = parseError(error)
+                    const { status, message } = parseError(error)
+                    // queue for retry unless it was a bot-filter (needs captcha solve, not a simple retry)
+                    if (!isZillowBotFiltering(status, message)) {
+                      failedFetches.push({ url, filePath })
+                    }
                     errors.add('scrape listing html error: ' + (message ?? `error fetching listing for id, ${error}`))
                   }
                 }))
@@ -159,12 +165,29 @@ export const scrapeListingHtmlByZipCodes = async (source: ListingsSource, zipCod
       }))
     }
   }
-  s.stop('Listings HTML files have been saved to:')
+
+  // retry individual listing fetches that failed with transient errors (timeout, empty response, etc.)
+  if (failedFetches.length > 0) {
+    await sleep(2000)
+    await Promise.all(failedFetches.map(async ({ url, filePath }) => {
+      try {
+        await fetchListingHtmlByUrlAndExport(source, url, filePath, { timeoutMs })
+      } catch (error) {
+        const { message } = parseError(error)
+        errors.add('scrape listing html retry error: ' + (message ?? `error fetching ${url}`))
+      }
+    }))
+  }
   const zillowOutputPath = await getZillowOutputPath()
   const redfinOutputPath = await getRedfinOutputPath()
   const outputPath = source === 'zillow' ? zillowOutputPath : redfinOutputPath
 
-  log.message(path.join(outputPath, source, 'listings', path.basename(inputDirectory)))
+  if (zipCodes.length > 0) {
+    s.stop('Listings HTML files have been saved to:')
+    log.message(path.join(outputPath, source, 'listings', path.basename(inputDirectory)))
+  } else {
+    s.stop('No listings HTML files saved.')
+  }
 
   const logsDirectory = path.join(outputPath, source, 'logs')
   // creates logsDirectory if it doesn't exit

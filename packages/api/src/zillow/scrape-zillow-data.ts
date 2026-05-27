@@ -26,6 +26,16 @@ export const fetchHtmlFromZillowListingUrl = async (url: string, options?: Zillo
     ...(timeoutMs && { signal: newAbortSignal(timeoutMs) }),
   }
   const { data } = await axios.options(url, config) || {}
+  if (!data || data === '') {
+    const err: any = new Error('empty response')
+    err.response = { status: 0, data: 'empty response' }
+    throw err
+  }
+  if (typeof data === 'string' && data.includes('px-captcha')) {
+    const err: any = new Error('captcha')
+    err.response = { status: 403, data: 'captcha' }
+    throw err
+  }
   return data
 }
 

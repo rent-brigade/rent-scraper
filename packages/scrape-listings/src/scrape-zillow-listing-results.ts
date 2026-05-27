@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from 'fs/promises'
 import path from 'path'
-import { type ZipCode, getZillowListingResults, type ZillowListingResultsOptions, checkForZillowBotFiltering } from '@rent-scraper/api'
+import { type ZipCode, getZillowListingResults, type ZillowListingResultsOptions, checkForZillowBotFiltering, isZillowBotFiltering } from '@rent-scraper/api'
 import { checkForFile, ErrorLog, parseError } from '@rent-scraper/utils'
 import { type ScrapeZillowListingsByZipCodesOptions } from './types.js'
 import { getZillowOutputPath } from '@rent-scraper/api/config'
@@ -8,7 +8,7 @@ import { log, spinner } from '@clack/prompts'
 
 const debug = process.env.DEBUG
 
-const fetchZillowListingResultsByZipCodeAndExport = async (zipCode: number, filePath: string, validZipCodes: ZipCode[], options?: ZillowListingResultsOptions) => {
+const fetchZillowListingResultsByZipCodeAndExport = async (zipCode: number, filePath: string, validZipCodes: ZipCode[], noResultsZipCodes: ZipCode[], options?: ZillowListingResultsOptions) => {
   const { daysOnZillow, timeoutMs } = options ?? {}
   // skip if file already exists
   if (await checkForFile(filePath)) {
@@ -29,12 +29,13 @@ const fetchZillowListingResultsByZipCodeAndExport = async (zipCode: number, file
       if (debug) {
         log.warning(`no results for ${zipCode}`)
       }
+      noResultsZipCodes.push(zipCode)
     }
   }
 }
 
 export const scrapeZillowListingResultsByZipCodes = async (zipCodes: number[], outputDirectory: string, options?: ScrapeZillowListingsByZipCodesOptions) => {
-  const { daysListed, timeoutMs, run = 1, reruns = 0, fetchListings = false, skipBotCheck = false } = options ?? {}
+  const { daysListed, timeoutMs, run = 1, reruns = 0, fetchListings = false, skipBotCheck = false, silent = false } = options ?? {}
   const errors = new ErrorLog()
 
   if (!skipBotCheck) {
@@ -43,12 +44,14 @@ export const scrapeZillowListingResultsByZipCodes = async (zipCodes: number[], o
 
   const validZipCodes = [] as ZipCode[]
   const rerunZipCodes = [] as ZipCode[]
+  const botFilteredZipCodes = [] as ZipCode[]
+  const noResultsZipCodes = [] as ZipCode[]
 
   // creates outputDirectory if it doesn't exist
   await mkdir(outputDirectory, { recursive: true })
 
   const s = spinner()
-  s.start('Scraping Zillow search results')
+  if (!silent) s.start('Scraping Zillow search results')
   for (let i = 1; i <= reruns + 1; i++) {
     if (reruns > 0 && i > 1) {
       errors.add(`rerun ${i - 1} of ${reruns}`)
@@ -60,30 +63,41 @@ export const scrapeZillowListingResultsByZipCodes = async (zipCodes: number[], o
         const filename = `${zipCode}.json`
         const filePath = `${outputDirectory}/${filename}`
         try {
-          await fetchZillowListingResultsByZipCodeAndExport(zipCode, filePath, validZipCodes, { daysOnZillow: daysListed, timeoutMs })
+          await fetchZillowListingResultsByZipCodeAndExport(zipCode, filePath, validZipCodes, noResultsZipCodes, { daysOnZillow: daysListed, timeoutMs })
         } catch (error) {
           rerunZipCodes.push(zipCode)
-          const { message } = parseError(error)
+          const { status, message } = parseError(error)
+          if (isZillowBotFiltering(status, message)) {
+            botFilteredZipCodes.push(zipCode)
+          }
           errors.add('scrape listing results error: ' + (message ?? `Error during fetch for ${zipCode}, ${error}`))
         }
       }))
     }
   }
-  s.stop('Zillow search results have been saved to:')
   const zillowOutputPath = await getZillowOutputPath()
-  log.message(path.join(zillowOutputPath, 'zillow', 'results', path.basename(outputDirectory)))
+  if (!silent) {
+    if (validZipCodes.length > 0) {
+      s.stop('Zillow search results have been saved to:')
+      log.message(path.join(zillowOutputPath, 'zillow', 'results', path.basename(outputDirectory)))
+    } else {
+      s.stop('No results saved.')
+    }
+  }
 
   const logsDirectory = path.join(zillowOutputPath, 'zillow', 'logs')
   // creates logsDirectory if it doesn't exit
   await mkdir(logsDirectory, { recursive: true })
 
-  // write errors
+  // write errors (suppress inline message for retries — errors are visible in the end summary)
   if (errors.get().filter(error => !error.includes('rerun ')).length > reruns) {
     const errorsFileName = `${path.basename(outputDirectory)}-results-errors-${run}.txt`
     const errorsPath = path.join(logsDirectory, errorsFileName)
     await errors.write(errorsPath, [...new Set(errors.get())].join('\n'))
-    log.error(`There were errors during processing, see ${path.resolve(errorsPath)}`)
+    if (!silent) {
+      log.error(`There were errors during processing, see ${path.resolve(errorsPath)}`)
+    }
   }
 
-  return { validZipCodes }
+  return { validZipCodes, botFilteredZipCodes, noResultsZipCodes }
 }

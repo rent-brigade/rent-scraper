@@ -15,6 +15,7 @@ export interface ScrapeConfig {
   daysListed?: number
   regionIds?: Record<number, number | null>
   browser?: string
+  autoCaptcha?: boolean
   zillowCookie?: string
   redfinCookie?: string
 }

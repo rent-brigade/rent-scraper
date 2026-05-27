@@ -9,4 +9,5 @@ export interface ScrapeZillowListingsByZipCodesOptions extends ScrapeListingsByZ
   altFetch?: boolean
   fetchListings?: boolean
   skipBotCheck?: boolean
+  silent?: boolean
 }

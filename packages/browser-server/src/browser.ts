@@ -104,6 +104,22 @@ export const launchBrowser = async (source = 'zillow' as ListingsSource) => {
   return { status: 'launched' }
 }
 
+export const getBrowserStatus = async () => {
+  const browser = await getBrowser()
+  if (browser) {
+    const pages = await browser.pages()
+    const page = pages?.[0]
+    if (!page) return { status: 'navigated' }
+    const pageTitle = await page.title()
+    if (pageTitle.includes('denied')) {
+      return { status: 'captcha' }
+    }
+    return { status: 'navigated' }
+  } else {
+    return { status: 'not connected' }
+  }
+}
+
 export const openBrowser = async (url: string) => {
   const browser = await getBrowser()
   if (browser) {
@@ -118,6 +134,11 @@ export const openBrowser = async (url: string) => {
     await page.goto(pageUrl, {
       waitUntil: 'load',
     })
+    // check title after navigation — zillow may have shown a captcha as a result of the request
+    const titleAfterNav = await page.title()
+    if (titleAfterNav.includes('denied')) {
+      return { status: 'captcha' }
+    }
     return { status: 'navigated' }
   } else {
     return { status: 'not connected' }

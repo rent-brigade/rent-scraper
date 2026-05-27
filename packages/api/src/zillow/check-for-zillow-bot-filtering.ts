@@ -1,5 +1,5 @@
 import { getZillowListingResults } from './get-zillow-listing-results.js'
-import { getZillowZipCodes } from './config.js'
+import { getZillowZipCodes, getZillowAutoCaptcha } from './config.js'
 import { getRandomArrayValue, parseError, throwError } from '@rent-scraper/utils'
 import { fetchHtmlFromZillowListingUrl } from './scrape-zillow-data.js'
 import { getZillowListingDetailsByZpid } from './get-zillow-listing-details.js'
@@ -17,6 +17,20 @@ interface CheckForZillowBotFilteringOptions {
 const openBrowser = async (url?: string) => {
   const { data } = await axios.post('http://localhost:8082/browser/open', { url })
   return data?.browser as { status: 'navigated' | 'captcha' | 'not connected' } | undefined
+}
+
+const checkBrowserStatus = async () => {
+  const { data } = await axios.post('http://localhost:8082/browser/status')
+  return data?.browser as { status: 'navigated' | 'captcha' | 'not connected' } | undefined
+}
+
+export const isBrowserShowingCaptcha = async (): Promise<boolean> => {
+  try {
+    const result = await checkBrowserStatus()
+    return result?.status === 'captcha'
+  } catch {
+    return false
+  }
 }
 
 const refreshCookie = async () => {
@@ -53,21 +67,27 @@ export const checkForZillowBotFiltering = async (options?: CheckForZillowBotFilt
   }
 }
 
+const autoSolveCaptcha = async (): Promise<boolean> => {
+  const { data } = await axios.post('http://localhost:8082/captcha/solve')
+  return data?.solved === true
+}
+
 export const waitForSolvedZillowCaptcha = async () => {
-  let captchaSeen = false
+  let autoSolveAttempted = false
   while (true) {
     try {
       const result = await openBrowser('https://www.zillow.com/homes/for_rent/')
       if (result?.status === 'captcha') {
-        captchaSeen = true
-      } else if (captchaSeen && result?.status === 'navigated') {
-        // captcha was showing and is now gone — refresh cookie to pick up new _px3
+        // attempt auto-solve once per captcha encounter (only if autoCaptcha: true in config)
+        if (!autoSolveAttempted && await getZillowAutoCaptcha()) {
+          autoSolveAttempted = true
+          await autoSolveCaptcha()
+          continue // check immediately whether it worked
+        }
+      } else if (result?.status === 'navigated') {
+        // browser is on a clean page — captcha was solved or session is already good
         await refreshCookie()
-        const solved = await checkForZillowBotFiltering()
-        if (solved) return solved
-      } else if (!captchaSeen) {
-        const solved = await checkForZillowBotFiltering()
-        if (solved) return solved
+        return true
       }
     } catch {
       // don't log the error
