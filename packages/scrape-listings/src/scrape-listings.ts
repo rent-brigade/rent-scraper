@@ -3,8 +3,8 @@ import dayjs from 'dayjs'
 import path from 'path'
 import axios from 'axios'
 import { mkdir, readdir, writeFile } from 'fs/promises'
-import { type ZipCode, checkForZillowBotFiltering, waitForSolvedZillowCaptcha, isBrowserShowingCaptcha } from '@rent-scraper/api'
-import { compareArrays, parseError, throwError } from '@rent-scraper/utils'
+import { type ZipCode, waitForSolvedZillowCaptcha, waitForZillowCaptchaSolve, isBrowserShowingCaptcha } from '@rent-scraper/api'
+import { compareArrays, throwError } from '@rent-scraper/utils'
 import type { ScrapeListingsByZipCodesOptions, ScrapeZillowListingsByZipCodesOptions } from './types.js'
 import { scrapeListingDetailsFromHtmlByZipCodes } from './scrape-listing-details-from-html.js'
 import { scrapeListingHtmlByZipCodes } from './scrape-listing-html.js'
@@ -12,7 +12,7 @@ import { scrapeZillowListingResultsByZipCodes } from './scrape-zillow-listing-re
 import { scrapeRedfinListingResultsByZipCodes } from './scrape-redfin-listing-results.js'
 import { scrapeZillowListingsToCsv } from './scrape-listings-to-csv.js'
 import { getRedfinOutputPath, getRedfinZipCodes, getZillowOutputPath, getZillowZipCodes, getZillowDaysListed, getRedfinDaysListed } from '@rent-scraper/api/config'
-import { cancel, confirm, intro, isCancel, log, outro } from '@clack/prompts'
+import { confirm, intro, isCancel, log } from '@clack/prompts'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { checkBrowserServer } from '@rent-scraper/utils/config'
 import color from 'picocolors'
@@ -35,33 +35,8 @@ const shutdownBrowserServer = async () => {
 }
 
 const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirectory: string, listingsDirectory: string, { daysListed, timeoutMs, run, reruns }: ScrapeZillowListingsByZipCodesOptions) => {
-  try {
-    // check for bot filtering before generating region ids
-    await checkForZillowBotFiltering()
-  } catch (error: any) {
-    const { message } = parseError(error)
-    log.error(message)
-    // advance once captcha is solved
-    const shouldContinue = await confirm({
-      message: 'You need to complete a captcha in your browser. Press Return to launch your browser and continue.',
-      active: 'OK',
-      inactive: 'Cancel',
-    })
-
-    if (isCancel(shouldContinue) || !shouldContinue) {
-      cancel('Create config canceled. Please try again.')
-      return process.exit(1)
-    }
-
-    await sleep(1000)
-
-    outro('Browser Launching...')
-
-    await sleep(1000)
-
-    await waitForSolvedZillowCaptcha()
-  }
-
+  // always refresh cookie before fetching — Puppeteer sessions start with a stale cookie
+  await waitForSolvedZillowCaptcha()
   await closeBrowser()
 
   let { validZipCodes, botFilteredZipCodes, noResultsZipCodes } = await scrapeZillowListingResultsByZipCodes(zipCodes, resultsDirectory, { daysListed, timeoutMs, run, reruns, skipBotCheck: true })
@@ -69,7 +44,6 @@ const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirect
   // retry hard bot-filtered zip codes (403 + captcha response)
   if (botFilteredZipCodes.length > 0) {
     log.warn(`Bot filtering hit ${botFilteredZipCodes.length} of ${zipCodes.length} zip code(s) — will retry after listings are fetched`)
-    // only re-solve captcha if one is actually showing; otherwise a short wait is enough
     if (await isBrowserShowingCaptcha()) {
       await waitForSolvedZillowCaptcha()
       await closeBrowser()
@@ -82,15 +56,16 @@ const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirect
     noResultsZipCodes = [...noResultsZipCodes, ...retryResult.noResultsZipCodes]
   }
 
-  // retry soft bot filtering — all zip codes came back empty with no errors (200 + empty data)
-  // always re-solve captcha here since 0/N results is a clear session issue regardless of browser state
+  // soft bot filtering — all zip codes came back empty (200 + empty data)
+  // force a captcha via rapid reloads, then refetch after it's solved
   if (validZipCodes.length === 0 && zipCodes.length > 0) {
     log.warn(`No results returned for any zip codes — possible soft bot filtering, retrying...`)
-    await waitForSolvedZillowCaptcha()
+    await waitForZillowCaptchaSolve()
     await closeBrowser()
     const retryResult = await scrapeZillowListingResultsByZipCodes(zipCodes, resultsDirectory, { daysListed, timeoutMs, run, reruns, skipBotCheck: true, silent: true })
     validZipCodes = retryResult.validZipCodes
     noResultsZipCodes = retryResult.noResultsZipCodes
+    botFilteredZipCodes = retryResult.botFilteredZipCodes
   }
 
   await scrapeListingHtmlByZipCodes('zillow', validZipCodes, resultsDirectory, listingsDirectory, { timeoutMs, run, reruns, skipBotCheck: true })

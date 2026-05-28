@@ -95,3 +95,47 @@ export const waitForSolvedZillowCaptcha = async () => {
     await new Promise(resolve => setTimeout(resolve, 500))
   }
 }
+
+// Aggressively reloads the page to force a captcha challenge, then waits for the user to solve it.
+// Uses timing to distinguish a real press-and-hold solve (several seconds) from a transient
+// PerimeterX JS challenge that clears automatically.
+export const waitForZillowCaptchaSolve = async () => {
+  let captchaSeen = false
+  let captchaFirstSeenAt: number | null = null
+  let autoSolveAttempted = false
+  while (true) {
+    try {
+      if (!captchaSeen) {
+        // rapid reloads to trigger the captcha challenge
+        const result = await openBrowser('https://www.zillow.com/homes/for_rent/')
+        if (result?.status === 'captcha') {
+          captchaSeen = true
+          captchaFirstSeenAt = Date.now()
+        }
+      } else {
+        // captcha is showing — poll without reloading so we don't interrupt the solve
+        const result = await checkBrowserStatus()
+        if (result?.status === 'navigated') {
+          const duration = captchaFirstSeenAt ? Date.now() - captchaFirstSeenAt : 0
+          if (duration >= 3000) {
+            // showed for long enough to be a real user solve
+            await refreshCookie()
+            return true
+          }
+          // cleared too fast — transient JS challenge, reset and keep reloading
+          captchaSeen = false
+          captchaFirstSeenAt = null
+          autoSolveAttempted = false
+        }
+        if (!autoSolveAttempted && await getZillowAutoCaptcha()) {
+          autoSolveAttempted = true
+          await autoSolveCaptcha()
+          continue
+        }
+      }
+    } catch {
+      // don't log the error
+    }
+    await new Promise(resolve => setTimeout(resolve, captchaSeen ? 500 : 100))
+  }
+}
