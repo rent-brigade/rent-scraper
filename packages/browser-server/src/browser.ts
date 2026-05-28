@@ -148,7 +148,15 @@ export const openBrowser = async (url: string) => {
 export const shutdownBrowser = async () => {
   const browser = await getBrowser()
   if (browser) {
-    await browser.close()
+    try {
+      // send Browser.close via CDP to actually terminate the browser process
+      // (browser.close() on a connected browser only disconnects the session)
+      const target = browser.target()
+      const session = await target.createCDPSession()
+      await session.send('Browser.close')
+    } catch {
+      await browser.disconnect()
+    }
     return { status: 'closed' }
   } else {
     return { status: 'not connected' }

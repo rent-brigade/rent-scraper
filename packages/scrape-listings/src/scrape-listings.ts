@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import path from 'path'
 import axios from 'axios'
 import { mkdir, readdir, writeFile } from 'fs/promises'
-import { type ZipCode, waitForSolvedZillowCaptcha, waitForZillowCaptchaSolve, isBrowserShowingCaptcha } from '@rent-scraper/api'
+import { type ZipCode, waitForSolvedZillowCaptcha, isBrowserShowingCaptcha } from '@rent-scraper/api'
 import { compareArrays, throwError } from '@rent-scraper/utils'
 import type { ScrapeListingsByZipCodesOptions, ScrapeZillowListingsByZipCodesOptions } from './types.js'
 import { scrapeListingDetailsFromHtmlByZipCodes } from './scrape-listing-details-from-html.js'
@@ -57,24 +57,14 @@ const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirect
   }
 
   // soft bot filtering — all zip codes came back empty (200 + empty data)
-  // force a captcha via rapid reloads, then refetch after it's solved
   if (validZipCodes.length === 0 && zipCodes.length > 0) {
-    log.warn(`No results returned for any zip codes — possible soft bot filtering, retrying...`)
-    await waitForZillowCaptchaSolve()
-    await closeBrowser()
-    const retryResult = await scrapeZillowListingResultsByZipCodes(zipCodes, resultsDirectory, { daysListed, timeoutMs, run, reruns, skipBotCheck: true, silent: true })
-    validZipCodes = retryResult.validZipCodes
-    noResultsZipCodes = retryResult.noResultsZipCodes
-    botFilteredZipCodes = retryResult.botFilteredZipCodes
+    log.warn(`No results returned for any zip codes — possible soft bot filtering. Please try again shortly.`)
   }
 
-  await scrapeListingHtmlByZipCodes('zillow', validZipCodes, resultsDirectory, listingsDirectory, { timeoutMs, run, reruns, skipBotCheck: true })
-  let { numListings } = await scrapeListingDetailsFromHtmlByZipCodes('zillow', validZipCodes, listingsDirectory)
-
-  // end-of-run retry: scrape results + HTML + parse for any zip codes still bot-filtered
+  // end-of-run retry: recover any still-bot-filtered zip codes before scraping HTML
   if (botFilteredZipCodes.length > 0) {
     const retryCount = botFilteredZipCodes.length
-    log.warn(`Retrying ${retryCount} bot-filtered zip code(s)...`)
+    log.warn(`${retryCount} zip code(s) still bot-filtered`)
     const shouldRetry = await confirm({
       message: 'Retry bot-filtered zip codes? The browser will open — solve the captcha, then wait for scraping to resume.',
       active: 'OK',
@@ -85,24 +75,17 @@ const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirect
       await waitForSolvedZillowCaptcha()
       await closeBrowser()
       const endRetryResult = await scrapeZillowListingResultsByZipCodes(botFilteredZipCodes, resultsDirectory, { daysListed, timeoutMs, run, reruns, skipBotCheck: true, silent: true })
-      let retryListings = 0
-      if (endRetryResult.validZipCodes.length > 0) {
-        await scrapeListingHtmlByZipCodes('zillow', endRetryResult.validZipCodes, resultsDirectory, listingsDirectory, { timeoutMs, run, reruns, skipBotCheck: true })
-        const { numListings: n } = await scrapeListingDetailsFromHtmlByZipCodes('zillow', endRetryResult.validZipCodes, listingsDirectory)
-        retryListings = n
-        numListings += retryListings
-        validZipCodes = [...validZipCodes, ...endRetryResult.validZipCodes]
-      }
+      validZipCodes = [...validZipCodes, ...endRetryResult.validZipCodes]
       botFilteredZipCodes = endRetryResult.botFilteredZipCodes
       noResultsZipCodes = [...noResultsZipCodes, ...endRetryResult.noResultsZipCodes]
       const recovered = endRetryResult.validZipCodes.length
-      if (recovered > 0) {
-        log.info(`Recovered ${recovered} of ${retryCount} zip code(s) — ${retryListings} additional listings`)
-      } else {
-        log.info(`Recovered 0 of ${retryCount} zip code(s)`)
-      }
+      log.info(recovered > 0 ? `Recovered ${recovered} of ${retryCount} zip code(s)` : `Recovered 0 of ${retryCount} zip code(s)`)
     }
   }
+
+  // --- Phase 2: scrape HTML and parse for all valid zip codes ---
+  await scrapeListingHtmlByZipCodes('zillow', validZipCodes, resultsDirectory, listingsDirectory, { timeoutMs, run, reruns, skipBotCheck: true })
+  const { numListings } = await scrapeListingDetailsFromHtmlByZipCodes('zillow', validZipCodes, listingsDirectory)
 
   return { numListings, validZipCodes, noResultsZipCodes }
 }
@@ -154,92 +137,96 @@ export async function runScrapeListings() {
 
   let totalCsvListings = 0
 
-  if (source === 'redfin') {
-    const redfinZipCodes = await getRedfinZipCodes()
-    for (let run = 1; run <= runs; run++) {
-      if (!redfinZipCodes) {
-        throwError('zip codes required, please run the createConfig script')
-      }
-      const zipCodes = redfinZipCodes
-
-      const { numListings, validZipCodes } = await scrapeRedfinListingsByZipCodes(zipCodes, resultsDirectory, listingsDirectory, { daysListed, timeoutMs, run, reruns })
-      if (run === runs) {
-        // parse results data for text file output
-        const scrapingResultsData = Object.entries({ numListings }).map(([key, val]) => `${key}: ${val}`).join('\n')
-        const invalidZipCodes = compareArrays(zipCodes, validZipCodes)
-        const invalidZipCodesData = invalidZipCodes.join('\n')
-
-        // creates logsDirectory if it doesn't exit
-        await mkdir(logsDirectory, { recursive: true })
-
-        // write results and logs
-        const logScrapingResultsFileName = `${path.basename(resultsDirectory)}-scraping-results.txt`
-        const logScrapingResultsPath = path.join(logsDirectory, logScrapingResultsFileName)
-        const logInvalidZipCodesFileName = `${path.basename(resultsDirectory)}-invalid-zipcodes.txt`
-        const logInvalidZipCodesPath = path.join(logsDirectory, logInvalidZipCodesFileName)
-
-        await writeFile (logScrapingResultsPath, scrapingResultsData)
-        await writeFile (logInvalidZipCodesPath, invalidZipCodesData)
-      }
+  const shutdownIfRunning = async () => {
+    if (source === 'zillow' || source === 'redfin') {
+      if (await checkBrowserServer()) await shutdownBrowserServer()
     }
-  } else if (source === 'zillow') {
-    const zillowZipCodes = await getZillowZipCodes()
-    for (let run = 1; run <= runs; run++) {
-      if (!zillowZipCodes) {
-        throwError('zip codes required, please run the createConfig script')
-      }
-      const zipCodes = zillowZipCodes
+  }
 
-      const { numListings, validZipCodes, noResultsZipCodes } = await scrapeZillowListingsByZipCodes(zipCodes, resultsDirectory, listingsDirectory, { daysListed, timeoutMs, run, reruns })
-      if (run === runs) {
-        const timestamp = path.basename(listingsDirectory)
-        const csvOutputPath = path.join(zillowOutputPath, 'zillow', 'csv', `${timestamp}.csv`)
-        const numCsvListings = await scrapeZillowListingsToCsv(listingsDirectory, csvOutputPath)
-        totalCsvListings = numCsvListings
-        if (numCsvListings > 0) {
-          log.info(`CSV exported: ${numCsvListings} listings → ${csvOutputPath}`)
+  try {
+    if (source === 'redfin') {
+      const redfinZipCodes = await getRedfinZipCodes()
+      for (let run = 1; run <= runs; run++) {
+        if (!redfinZipCodes) {
+          throwError('zip codes required, please run the createConfig script')
         }
+        const zipCodes = redfinZipCodes
 
-        // parse results data for text file output
-        const scrapingResultsData = Object.entries({ numListings, numCsvListings }).map(([key, val]) => `${key}: ${val}`).join('\n')
-        const invalidZipCodes = compareArrays(zipCodes, validZipCodes)
-        const noResultsSet = new Set(noResultsZipCodes)
-        const erroredZipCodes = invalidZipCodes.filter(zc => !noResultsSet.has(zc))
-        const noResultsInvalid = invalidZipCodes.filter(zc => noResultsSet.has(zc))
+        const { numListings, validZipCodes } = await scrapeRedfinListingsByZipCodes(zipCodes, resultsDirectory, listingsDirectory, { daysListed, timeoutMs, run, reruns })
+        if (run === runs) {
+          // parse results data for text file output
+          const scrapingResultsData = Object.entries({ numListings }).map(([key, val]) => `${key}: ${val}`).join('\n')
+          const invalidZipCodes = compareArrays(zipCodes, validZipCodes)
+          const invalidZipCodesData = invalidZipCodes.join('\n')
 
-        // creates logsDirectory if it doesn't exit
-        await mkdir(logsDirectory, { recursive: true })
+          // creates logsDirectory if it doesn't exit
+          await mkdir(logsDirectory, { recursive: true })
 
-        // write results and logs
-        const logScrapingResultsFileName = `${path.basename(resultsDirectory)}-scraping-results.txt`
-        const logScrapingResultsPath = path.join(logsDirectory, logScrapingResultsFileName)
-        const logNoResultsZipCodesFileName = `${path.basename(resultsDirectory)}-zipcodes-no-results.txt`
-        const logNoResultsZipCodesPath = path.join(logsDirectory, logNoResultsZipCodesFileName)
-        const logErroredZipCodesFileName = `${path.basename(resultsDirectory)}-zipcodes-errored.txt`
-        const logErroredZipCodesPath = path.join(logsDirectory, logErroredZipCodesFileName)
+          // write results and logs
+          const logScrapingResultsFileName = `${path.basename(resultsDirectory)}-scraping-results.txt`
+          const logScrapingResultsPath = path.join(logsDirectory, logScrapingResultsFileName)
+          const logInvalidZipCodesFileName = `${path.basename(resultsDirectory)}-invalid-zipcodes.txt`
+          const logInvalidZipCodesPath = path.join(logsDirectory, logInvalidZipCodesFileName)
 
-        await writeFile(logScrapingResultsPath, scrapingResultsData)
-        if (noResultsInvalid.length > 0) await writeFile(logNoResultsZipCodesPath, noResultsInvalid.join('\n'))
-        if (erroredZipCodes.length > 0) await writeFile(logErroredZipCodesPath, erroredZipCodes.join('\n'))
+          await writeFile(logScrapingResultsPath, scrapingResultsData)
+          await writeFile(logInvalidZipCodesPath, invalidZipCodesData)
+        }
+      }
+    } else if (source === 'zillow') {
+      const zillowZipCodes = await getZillowZipCodes()
+      for (let run = 1; run <= runs; run++) {
+        if (!zillowZipCodes) {
+          throwError('zip codes required, please run the createConfig script')
+        }
+        const zipCodes = zillowZipCodes
 
-        // terminal summary
-        const zipSummaryParts = [`${validZipCodes.length}/${zipCodes.length} with results`]
-        if (noResultsInvalid.length > 0) zipSummaryParts.push(`${noResultsInvalid.length} no results`)
-        if (erroredZipCodes.length > 0) zipSummaryParts.push(`${erroredZipCodes.length} errored`)
-        log.info(`Zip codes: ${zipSummaryParts.join(' · ')}`)
-        log.info(`Listings:  ${numListings} parsed · ${numCsvListings} exported to CSV`)
+        const { numListings, validZipCodes, noResultsZipCodes } = await scrapeZillowListingsByZipCodes(zipCodes, resultsDirectory, listingsDirectory, { daysListed, timeoutMs, run, reruns })
+        if (run === runs) {
+          const timestamp = path.basename(listingsDirectory)
+          const csvOutputPath = path.join(zillowOutputPath, 'zillow', 'csv', `${timestamp}.csv`)
+          const numCsvListings = await scrapeZillowListingsToCsv(listingsDirectory, csvOutputPath)
+          totalCsvListings = numCsvListings
+          if (numCsvListings > 0) {
+            log.info(`CSV exported: ${numCsvListings} listings → ${csvOutputPath}`)
+          }
+
+          // parse results data for text file output
+          const scrapingResultsData = Object.entries({ numListings, numCsvListings }).map(([key, val]) => `${key}: ${val}`).join('\n')
+          const invalidZipCodes = compareArrays(zipCodes, validZipCodes)
+          const noResultsSet = new Set(noResultsZipCodes)
+          const erroredZipCodes = invalidZipCodes.filter(zc => !noResultsSet.has(zc))
+          const noResultsInvalid = invalidZipCodes.filter(zc => noResultsSet.has(zc))
+
+          // creates logsDirectory if it doesn't exit
+          await mkdir(logsDirectory, { recursive: true })
+
+          // write results and logs
+          const logScrapingResultsFileName = `${path.basename(resultsDirectory)}-scraping-results.txt`
+          const logScrapingResultsPath = path.join(logsDirectory, logScrapingResultsFileName)
+          const logNoResultsZipCodesFileName = `${path.basename(resultsDirectory)}-zipcodes-no-results.txt`
+          const logNoResultsZipCodesPath = path.join(logsDirectory, logNoResultsZipCodesFileName)
+          const logErroredZipCodesFileName = `${path.basename(resultsDirectory)}-zipcodes-errored.txt`
+          const logErroredZipCodesPath = path.join(logsDirectory, logErroredZipCodesFileName)
+
+          await writeFile(logScrapingResultsPath, scrapingResultsData)
+          if (noResultsInvalid.length > 0) await writeFile(logNoResultsZipCodesPath, noResultsInvalid.join('\n'))
+          if (erroredZipCodes.length > 0) await writeFile(logErroredZipCodesPath, erroredZipCodes.join('\n'))
+
+          // terminal summary
+          const zipSummaryParts = [`${validZipCodes.length}/${zipCodes.length} with results`]
+          if (noResultsInvalid.length > 0) zipSummaryParts.push(`${noResultsInvalid.length} no results`)
+          if (erroredZipCodes.length > 0) zipSummaryParts.push(`${erroredZipCodes.length} errored`)
+          log.info(`Zip codes: ${zipSummaryParts.join(' · ')}`)
+          log.info(`Listings:  ${numListings} parsed · ${numCsvListings} exported to CSV`)
+        }
       }
     }
-  }
-  if (source === 'zillow' ? totalCsvListings > 0 : true) {
-    log.success('Scraping complete!')
-  } else {
-    log.warn('Scraping finished but no listings were exported — please try again shortly.')
-  }
-
-  if (source === 'zillow' || source === 'redfin') {
-    if (await checkBrowserServer()) {
-      await shutdownBrowserServer()
+    if (source === 'zillow' ? totalCsvListings > 0 : true) {
+      log.success('Scraping complete!')
+    } else {
+      log.warn('Scraping finished but no listings were exported — please try again shortly.')
     }
+  } finally {
+    await shutdownIfRunning()
   }
 }

@@ -36,13 +36,10 @@ export function runBrowserServer(source: ListingsSource = 'zillow') {
     }
   })
 
-  const shutdownServer = () => {
-    server.close(async (err) => {
-      const browser = await shutdownBrowser()
-      if (debug) {
-        console.log(browser)
-        console.log('server closed')
-      }
+  const shutdownServer = async () => {
+    await shutdownBrowser()
+    server.close((err) => {
+      if (debug) console.log('server closed')
       process.exit(err ? 1 : 0)
     })
     return { status: 'shutdown' }
