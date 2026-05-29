@@ -82,7 +82,8 @@ interface RedfinResult {
 
 const parseIdAndUrlFromResult = (result: ZillowResult & RedfinResult, source = 'zillow' as ListingsSource) => {
   if (source === 'zillow') {
-    const { zpid: id, detailUrl: url } = result || {}
+    const { zpid: id, detailUrl } = result || {}
+    const url = detailUrl && !detailUrl.startsWith('http') ? `https://www.zillow.com${detailUrl}` : detailUrl
     return { id, url }
   } else if (source === 'redfin') {
     const { propertyId: id, url } = result?.homeData || {}

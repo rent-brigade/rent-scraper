@@ -11,7 +11,7 @@ import { scrapeListingHtmlByZipCodes } from './scrape-listing-html.js'
 import { scrapeZillowListingResultsByZipCodes } from './scrape-zillow-listing-results.js'
 import { scrapeRedfinListingResultsByZipCodes } from './scrape-redfin-listing-results.js'
 import { scrapeZillowListingsToCsv } from './scrape-listings-to-csv.js'
-import { getRedfinOutputPath, getRedfinZipCodes, getZillowOutputPath, getZillowZipCodes, getZillowDaysListed, getRedfinDaysListed } from '@rent-scraper/api/config'
+import { getRedfinOutputPath, getRedfinZipCodes, getZillowOutputPath, getZillowZipCodes, getZillowDaysListed, getZillowLimit, getZillowOffset, getRedfinDaysListed } from '@rent-scraper/api/config'
 import { confirm, intro, isCancel, log } from '@clack/prompts'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { checkBrowserServer } from '@rent-scraper/utils/config'
@@ -127,6 +127,8 @@ export async function runScrapeListings() {
   const runs = args.runs ?? 1 // allow multiple runs to catch any listings that might have been missed
   const reruns = args.reruns ?? 0 // allow re-runs on error
   const timeoutMs = args['timeout-ms'] ?? 60000 // set timeout for fetches
+  const limit: number | undefined = args.limit ?? await getZillowLimit() ?? undefined
+  const offset: number = args.offset ?? await getZillowOffset() ?? 0
 
   // --rerun flag: resume from a specific or most recent previous run
   const rerun = args.rerun
@@ -185,7 +187,7 @@ export async function runScrapeListings() {
     } else if (source === 'zillow') {
       const zillowZipCodes = await getZillowZipCodes()
       if (!zillowZipCodes) throwError('zip codes required, please run the createConfig script')
-      const zipCodes = zillowZipCodes
+      const zipCodes = zillowZipCodes.slice(offset, limit ? offset + limit : undefined)
 
       // For reruns: scan results directory and only re-fetch zip codes with missing result files
       let zipCodesToFetch = zipCodes
