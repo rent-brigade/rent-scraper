@@ -11,4 +11,5 @@ export interface ScrapeZillowListingsByZipCodesOptions extends ScrapeListingsByZ
   skipBotCheck?: boolean
   silent?: boolean
   preValidatedZipCodes?: number[]
+  retry?: boolean
 }

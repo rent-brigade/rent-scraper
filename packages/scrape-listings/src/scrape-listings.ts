@@ -12,7 +12,7 @@ import { scrapeZillowListingResultsByZipCodes } from './scrape-zillow-listing-re
 import { scrapeRedfinListingResultsByZipCodes } from './scrape-redfin-listing-results.js'
 import { scrapeZillowListingsToCsv } from './scrape-listings-to-csv.js'
 import { getRedfinOutputPath, getRedfinZipCodes, getZillowOutputPath, getZillowZipCodes, getZillowDaysListed, getZillowLimit, getZillowOffset, getRedfinDaysListed } from '@rent-scraper/api/config'
-import { confirm, intro, isCancel, log } from '@clack/prompts'
+import { intro, log } from '@clack/prompts'
 import { setTimeout as sleep } from 'node:timers/promises'
 import { checkBrowserServer } from '@rent-scraper/utils/config'
 import color from 'picocolors'
@@ -34,7 +34,7 @@ const shutdownBrowserServer = async () => {
   await axios.post('http://localhost:8082/server/shutdown')
 }
 
-const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirectory: string, listingsDirectory: string, { daysListed, timeoutMs, run, reruns, preValidatedZipCodes = [] }: ScrapeZillowListingsByZipCodesOptions) => {
+const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirectory: string, listingsDirectory: string, { daysListed, timeoutMs, run, reruns, preValidatedZipCodes = [], retry = false }: ScrapeZillowListingsByZipCodesOptions) => {
   let validZipCodes: ZipCode[] = []
   let botFilteredZipCodes: ZipCode[] = []
   let noResultsZipCodes: ZipCode[] = []
@@ -47,7 +47,7 @@ const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirect
     ;({ validZipCodes, botFilteredZipCodes, noResultsZipCodes } = await scrapeZillowListingResultsByZipCodes(zipCodes, resultsDirectory, { daysListed, timeoutMs, run, reruns, skipBotCheck: true }))
 
     // retry hard bot-filtered zip codes (403 + captcha response)
-    if (botFilteredZipCodes.length > 0) {
+    if (retry && botFilteredZipCodes.length > 0) {
       log.warn(`Bot filtering hit ${botFilteredZipCodes.length} of ${zipCodes.length} zip code(s) — will retry after listings are fetched`)
       if (await isBrowserShowingCaptcha()) {
         await waitForSolvedZillowCaptcha()
@@ -69,26 +69,8 @@ const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirect
       log.warn(`No results returned for any zip codes — possible soft bot filtering. Please try again shortly.`)
     }
 
-    // end-of-run retry: recover any still-bot-filtered zip codes before scraping HTML
     if (botFilteredZipCodes.length > 0) {
-      const retryCount = botFilteredZipCodes.length
-      log.warn(`${retryCount} zip code(s) still bot-filtered`)
-      const shouldRetry = await confirm({
-        message: 'Retry bot-filtered zip codes? The browser will open — solve the captcha, then wait for scraping to resume.',
-        active: 'OK',
-        inactive: 'Skip',
-      })
-      if (!isCancel(shouldRetry) && shouldRetry) {
-        log.info('Opening browser — solve the captcha to continue...')
-        await waitForSolvedZillowCaptcha()
-        await closeBrowser()
-        const endRetryResult = await scrapeZillowListingResultsByZipCodes(botFilteredZipCodes, resultsDirectory, { daysListed, timeoutMs, run, reruns, skipBotCheck: true, silent: true })
-        validZipCodes = [...validZipCodes, ...endRetryResult.validZipCodes]
-        botFilteredZipCodes = endRetryResult.botFilteredZipCodes
-        noResultsZipCodes = [...noResultsZipCodes, ...endRetryResult.noResultsZipCodes]
-        const recovered = endRetryResult.validZipCodes.length
-        log.info(recovered > 0 ? `Recovered ${recovered} of ${retryCount} zip code(s)` : `Recovered 0 of ${retryCount} zip code(s)`)
-      }
+      log.warn(`${botFilteredZipCodes.length} zip code(s) still bot-filtered — use --rerun to retry`)
     }
   }
 
@@ -129,6 +111,7 @@ export async function runScrapeListings() {
   const timeoutMs = args['timeout-ms'] ?? 60000 // set timeout for fetches
   const limit: number | undefined = args.limit ?? await getZillowLimit() ?? undefined
   const offset: number = args.offset ?? await getZillowOffset() ?? 0
+  const retry: boolean = args.retry ?? false
 
   // --rerun flag: resume from a specific or most recent previous run
   const rerun = args.rerun
@@ -205,7 +188,7 @@ export async function runScrapeListings() {
       }
 
       for (let run = 1; run <= runs; run++) {
-        const { numListings, validZipCodes, noResultsZipCodes } = await scrapeZillowListingsByZipCodes(zipCodesToFetch, resultsDirectory, listingsDirectory, { daysListed, timeoutMs, run, reruns, preValidatedZipCodes })
+        const { numListings, validZipCodes, noResultsZipCodes } = await scrapeZillowListingsByZipCodes(zipCodesToFetch, resultsDirectory, listingsDirectory, { daysListed, timeoutMs, run, reruns, preValidatedZipCodes, retry })
         if (run === runs) {
           const timestamp = path.basename(listingsDirectory)
           const csvOutputPath = path.join(zillowOutputPath, 'zillow', 'csv', `${timestamp}.csv`)
