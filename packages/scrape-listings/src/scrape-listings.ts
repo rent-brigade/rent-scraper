@@ -229,11 +229,13 @@ export async function runScrapeListings() {
         }
       }
     }
-    if (source === 'zillow' ? totalCsvListings > 0 : true) {
+    const success = source === 'zillow' ? totalCsvListings > 0 : true
+    if (success) {
       log.success('Scraping complete!')
     } else {
       log.warn('Scraping finished but no listings were exported — please try again shortly.')
     }
+    return { success, totalCsvListings }
   } finally {
     await shutdownIfRunning()
   }
