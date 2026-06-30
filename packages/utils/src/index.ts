@@ -92,7 +92,6 @@ export const parseError = (error: any) => {
       }
     } catch {
       const { status, message } = error ?? {}
-      console.log({ status, message })
       return { status: status || 400, message: message || 'Internal Server Error' }
     }
   }
