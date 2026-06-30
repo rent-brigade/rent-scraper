@@ -82,7 +82,8 @@ export const waitForSolvedZillowCaptcha = async () => {
         if (!autoSolveAttempted && await getZillowAutoCaptcha()) {
           autoSolveAttempted = true
           await autoSolveCaptcha()
-          continue // check immediately whether it worked
+          autoSolveAttempted = false
+          continue
         }
       } else if (result?.status === 'navigated') {
         // browser is on a clean page — captcha was solved or session is already good

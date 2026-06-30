@@ -16,6 +16,7 @@ export interface ScrapeConfig {
   regionIds?: Record<number, number | null>
   browser?: string
   autoCaptcha?: boolean
+  forceCaptcha?: boolean
   limit?: number
   offset?: number
   zillowCookie?: string

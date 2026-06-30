@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import path from 'path'
 import axios from 'axios'
 import { mkdir, readdir, writeFile } from 'fs/promises'
-import { type ZipCode, waitForSolvedZillowCaptcha, isBrowserShowingCaptcha } from '@rent-scraper/api'
+import { type ZipCode, waitForSolvedZillowCaptcha, waitForZillowCaptchaSolve, getZillowForceCaptcha, isBrowserShowingCaptcha } from '@rent-scraper/api'
 import { compareArrays, throwError } from '@rent-scraper/utils'
 import type { ScrapeListingsByZipCodesOptions, ScrapeZillowListingsByZipCodesOptions } from './types.js'
 import { scrapeListingDetailsFromHtmlByZipCodes } from './scrape-listing-details-from-html.js'
@@ -41,7 +41,8 @@ const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirect
 
   if (zipCodes.length > 0) {
     // always refresh cookie before fetching — Puppeteer sessions start with a stale cookie
-    await waitForSolvedZillowCaptcha()
+    // forceCaptcha: true in config triggers rapid reloads to force the captcha to appear (debug)
+    await (await getZillowForceCaptcha() ? waitForZillowCaptchaSolve() : waitForSolvedZillowCaptcha())
     await closeBrowser()
 
     ;({ validZipCodes, botFilteredZipCodes, noResultsZipCodes } = await scrapeZillowListingResultsByZipCodes(zipCodes, resultsDirectory, { daysListed, timeoutMs, run, reruns, skipBotCheck: true }))

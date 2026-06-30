@@ -1,4 +1,5 @@
 export * from './check-for-zillow-bot-filtering.js'
+export * from './config.js'
 export * from './get-zillow-listing-details.js'
 export * from './get-zillow-listing-results.js'
 export * from './get-zillow-region-id.js'
