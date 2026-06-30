@@ -175,18 +175,6 @@ export async function runInitConfig(source?: ListingsSource) {
     return process.exit(1)
   }
 
-  // await sleep(1000)
-  // log.info('')
-
-  // const shouldContinue = await confirm({
-  //   message: 'Are you ready to continue?',
-  // })
-
-  // if (isCancel(shouldContinue) || !shouldContinue) {
-  //   cancel('Create config canceled. Please try again.')
-  //   return process.exit(1)
-  // }
-
   await sleep(1000)
 
   const answers = [
