@@ -1,60 +1,98 @@
 # rent-scraper
 
-Scrape data from rental listings
+Scrape rental listings from Zillow and Redfin and export them to CSV.
 
-### Prerequisites
+## Prerequisites
 
 - Node.js >= 22
-- pnpm package manager
-- MacOS + Google Chrome or Brave browser installed (cross platform coming soon)
+- pnpm
+- macOS with Google Chrome or Brave installed
 
-### Zero Development Usage
+## Quick Start (no dev setup)
 
-1. Run Latest Production Version
+```bash
+npx rent-scraper
+```
 
-    ```bash
-    npx rent-scraper
-    ```
+This runs the interactive setup wizard on first launch, then starts scraping.
 
-### Development Setup and Usage
+## Development Setup
 
-1. Install pnpm globally (if not already installed):
+```bash
+# Install dependencies
+pnpm install
 
-   ```bash
-   npm install -g pnpm
-   ```
+# Run in dev mode (with ts-node, no build step)
+pnpm run rent-scraper:dev
 
-2. Clone the repository and install dependencies:
+# Build all packages
+pnpm run build
 
-   ```bash
-   git clone [repository-url]
-   cd rent-scraper
-   pnpm install
-   ```
+# Run built version
+pnpm run rent-scraper
+```
 
-3. Run development version:
+## How It Works
 
-   ```bash
-   pnpm run rent-scraper:dev
-   ```
+1. **Config** — on first run, an interactive wizard creates `config.zillow.yaml` (or `config.redfin.yaml`) with your zip codes, output path, and other settings.
+2. **Browser server** — a local Puppeteer server starts at `http://localhost:8082`, opens Zillow in a real browser, captures the session cookie, and handles PerimeterX captcha challenges.
+3. **Scraping** — zip codes are fetched in parallel using the captured cookie. Results are written as JSON, then parsed into HTML listings, then exported to a single CSV.
 
-4. Build the project:
+## Config File
 
-   ```bash
-   pnpm run build
-   ```
+Config is stored as YAML. The wizard creates it, but you can edit it directly.
 
-5. Run built version:
+```yaml
+outputPath: /path/to/output # where CSV and raw data are saved
+zipCodes: 90026, 90039, 90027 # comma-separated list
+daysListed: 1 # listings posted within N days (max 90)
+forceCaptcha: false # force captcha to appear on every run (debug only)
+limit: 100 # only scrape first N zip codes (optional)
+offset: 0 # skip first N zip codes (optional)
+zillowCookie: ... # saved automatically by the browser server
+```
 
-   ```bash
-   pnpm run rent-scraper
-   ```
+## CLI Flags
 
-### Advanced Usage
+All flags override the corresponding config file value.
 
-#### Command Line Options with defaults (overrides config file)
-- ```--source=zillow```: Scrape source (zillow or redfin)
-- ```--days-listed=1```: Days listed (number)
-- ```--runs=1```: Amount of times to run the entire script (number)
-- ```--reruns=1```: Amount of times to rerun each script (number)
-- ```--timout-ms=60000```: Time in milliseconds to kill fetch and cause a rerun (number)
+| Flag            | Default  | Description                                                            |
+| --------------- | -------- | ---------------------------------------------------------------------- |
+| `--source`      | `zillow` | Listings source: `zillow` or `redfin`                                  |
+| `--days-listed` | `1`      | Listings posted within N days                                          |
+| `--runs`        | `1`      | Number of full scrape passes                                           |
+| `--reruns`      | `0`      | Retries per failed zip code fetch                                      |
+| `--timeout-ms`  | `60000`  | Per-request timeout in milliseconds                                    |
+| `--limit`       | _(none)_ | Only scrape first N zip codes                                          |
+| `--offset`      | `0`      | Skip first N zip codes                                                 |
+| `--retry`       | `false`  | Retry hard bot-filtered zip codes inline                               |
+| `--rerun`       | _(none)_ | Resume from a previous run's timestamp (or `true` for the most recent) |
+
+## Individual Commands
+
+```bash
+# Run only the browser server (Zillow cookie/captcha handling)
+pnpm run browser-server
+
+# Run only the config wizard
+pnpm run create-config
+
+# Run only the scrape step (browser server must already be running)
+pnpm run scrape-listings
+
+# Validate and update an existing config
+pnpm run check-config
+```
+
+## Output
+
+Results are written under `outputPath`:
+
+```
+outputPath/
+  zillow/
+    results/YYYY-MM-DD-HHmm/   # raw JSON per zip code
+    listings/YYYY-MM-DD-HHmm/  # parsed HTML per listing
+    csv/YYYY-MM-DD-HHmm.csv    # final export
+    logs/                       # scraping summaries and error zip codes
+```
