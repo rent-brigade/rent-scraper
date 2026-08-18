@@ -55,10 +55,10 @@ const parseZillowListingHtmlData = (data: any, type: 'building' | 'property') =>
   if (type === 'building') {
     return data?.initialReduxState?.gdp?.building ?? null
   } else {
-    data = data && JSON.parse(data?.gdpClientCache)
-    const firstKey = data && Object.keys(data)?.[0]
-    data = data?.[firstKey]?.property
-    return data ?? null
+    const cache = data && JSON.parse(data?.gdpClientCache)
+    if (!cache) return null
+    const entry = Object.values(cache).find((v: any) => v?.property) as any
+    return entry?.property ?? null
   }
 }
 
