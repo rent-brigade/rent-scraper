@@ -67,7 +67,11 @@ const scrapeZillowListingsByZipCodes = async (zipCodes: ZipCode[], resultsDirect
 
     // soft bot filtering — all zip codes came back empty (200 + empty data)
     if (validZipCodes.length === 0 && zipCodes.length > 0) {
-      log.warn(`No results returned for any zip codes — possible soft bot filtering. Please try again shortly.`)
+      if (preValidatedZipCodes.length > 0) {
+        log.warn(`No new results for re-fetched zip codes — proceeding with ${preValidatedZipCodes.length} previously fetched`)
+      } else {
+        log.warn(`No results returned for any zip codes — possible soft bot filtering. Please try again shortly.`)
+      }
     }
 
     if (botFilteredZipCodes.length > 0) {
@@ -132,6 +136,7 @@ export async function runScrapeListings() {
   const logsDirectory = args['logs-directory'] ?? path.join(outputPath, source, 'logs')
 
   let totalCsvListings = 0
+  let totalMissedZipCodes = 0
 
   const shutdownIfRunning = async () => {
     if (source === 'zillow' || source === 'redfin') {
@@ -220,6 +225,7 @@ export async function runScrapeListings() {
           await writeFile(logScrapingResultsPath, scrapingResultsData)
           if (noResultsInvalid.length > 0) await writeFile(logNoResultsZipCodesPath, noResultsInvalid.join('\n'))
           if (erroredZipCodes.length > 0) await writeFile(logErroredZipCodesPath, erroredZipCodes.join('\n'))
+          totalMissedZipCodes = erroredZipCodes.length
 
           // terminal summary
           const zipSummaryParts = [`${validZipCodes.length}/${zipCodes.length} with results`]
@@ -236,7 +242,7 @@ export async function runScrapeListings() {
     } else {
       log.warn('Scraping finished but no listings were exported — please try again shortly.')
     }
-    return { success, totalCsvListings }
+    return { success, totalCsvListings, missedZipCodes: totalMissedZipCodes, resultsDirectory, listingsDirectory }
   } finally {
     await shutdownIfRunning()
   }
