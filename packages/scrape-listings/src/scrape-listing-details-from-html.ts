@@ -133,8 +133,8 @@ export const scrapeListingDetailsFromHtmlByZipCodes = async (source: ListingsSou
 
   // run the scraper in chunks to show progress
   for (const [idx, chunk] of chunks.entries()) {
-    const percent = roundValue(((Number(idx) + 1) / numChunks) * 100, 1)
-    p.advance(roundValue((1 / (numChunks)) * 100, 1), `Scraping listings (${parsePercentage(percent)})`)
+    const percent = roundValue(((Number(idx) + 1) / chunks.length) * 100, 1)
+    p.advance(roundValue((1 / chunks.length) * 100, 1), `Scraping listings (${parsePercentage(percent)})`)
 
     await Promise.all(chunk.map(async (zipCode) => {
       if (debug) {
