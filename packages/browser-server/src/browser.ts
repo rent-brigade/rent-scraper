@@ -70,7 +70,15 @@ export const getBrowser = async () => {
 export const closeBrowser = async () => {
   const browser = await getBrowser()
   const pages = await browser?.pages()
-  if (pages) await Promise.all(pages.map(page => page.close()))
+  if (pages) {
+    if (process.platform === 'linux' && pages.length > 0) {
+      // on Linux, browsers exit when all windows close — navigate active page to blank and close the rest
+      await pages[0].goto('about:blank')
+      await Promise.all(pages.slice(1).map(page => page.close()))
+    } else {
+      await Promise.all(pages.map(page => page.close()))
+    }
+  }
 }
 
 export const launchBrowser = async (source = 'zillow' as ListingsSource) => {
