@@ -71,10 +71,11 @@ export const closeBrowser = async () => {
   const browser = await getBrowser()
   const pages = await browser?.pages()
   if (pages) {
-    if (process.platform === 'linux' && pages.length > 0) {
-      // on Linux, browsers exit when all windows close — navigate active page to blank and close the rest
-      await pages[0].goto('about:blank')
-      await Promise.all(pages.slice(1).map(page => page.close()))
+    if (process.platform === 'linux' && browser) {
+      // on Linux, browsers exit when all windows close — open a fresh tab first to keep the process alive,
+      // then close all old tabs
+      await browser.newPage()
+      await Promise.all(pages.map(page => page.close()))
     } else {
       await Promise.all(pages.map(page => page.close()))
     }
@@ -139,11 +140,17 @@ export const openBrowser = async (url: string) => {
     if (pageTitle.includes('denied')) {
       return { status: 'captcha' }
     }
-    await page.goto(pageUrl, {
-      waitUntil: 'load',
-    })
+    if (process.platform === 'linux') {
+      try {
+        await page.goto(pageUrl, { waitUntil: 'domcontentloaded', timeout: 60000 })
+      } catch {
+        // navigation error — page may still have content, fall through to title check
+      }
+    } else {
+      await page.goto(pageUrl, { waitUntil: 'load' })
+    }
     // check title after navigation — zillow may have shown a captcha as a result of the request
-    const titleAfterNav = await page.title()
+    const titleAfterNav = await page.title().catch(() => '')
     if (titleAfterNav.includes('denied')) {
       return { status: 'captcha' }
     }
