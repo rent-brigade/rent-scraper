@@ -73,27 +73,35 @@ const autoSolveCaptcha = async (): Promise<boolean> => {
 }
 
 export const waitForSolvedZillowCaptcha = async () => {
+  let captchaSeen = false
   let autoSolveAttempted = false
   while (true) {
     try {
-      const result = await openBrowser('https://www.zillow.com/homes/for_rent/')
-      if (result?.status === 'captcha') {
-        // attempt auto-solve once per captcha encounter (only if autoCaptcha: true in config)
+      if (!captchaSeen) {
+        const result = await openBrowser('https://www.zillow.com/homes/for_rent/')
+        if (result?.status === 'captcha') {
+          captchaSeen = true
+        } else if (result?.status === 'navigated') {
+          await refreshCookie()
+          return true
+        }
+      } else {
+        // captcha is showing — poll without reloading so we don't trigger a new one
+        const result = await checkBrowserStatus()
+        if (result?.status === 'navigated') {
+          await refreshCookie()
+          return true
+        }
         if (!autoSolveAttempted && await getZillowAutoCaptcha()) {
           autoSolveAttempted = true
           await autoSolveCaptcha()
           autoSolveAttempted = false
-          continue
         }
-      } else if (result?.status === 'navigated') {
-        // browser is on a clean page — captcha was solved or session is already good
-        await refreshCookie()
-        return true
       }
     } catch {
       // don't log the error
     }
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await new Promise(resolve => setTimeout(resolve, captchaSeen ? 500 : 100))
   }
 }
 
@@ -123,10 +131,7 @@ export const waitForZillowCaptchaSolve = async () => {
             await refreshCookie()
             return true
           }
-          // cleared too fast — transient JS challenge, reset and keep reloading
-          captchaSeen = false
-          captchaFirstSeenAt = null
-          autoSolveAttempted = false
+          // cleared too fast — keep polling (don't reload or reset) until 3s elapsed
         }
         if (!autoSolveAttempted && await getZillowAutoCaptcha()) {
           autoSolveAttempted = true
