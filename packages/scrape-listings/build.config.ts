@@ -2,7 +2,7 @@ import path from 'node:path'
 import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
-  entries: ['src/index', 'src/bin/run-scrape-listings'],
+  entries: ['src/index', 'src/bin/run-scrape-listings', 'src/bin/run-scrape-listing-details'],
   clean: true,
   declaration: 'node16',
   rollup: {

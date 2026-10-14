@@ -10,6 +10,10 @@
     "./bin/run-scrape-listings": {
       "types": "./dist/bin/run-scrape-listings.d.mts",
       "default": "./dist/bin/run-scrape-listings.mjs"
+    },
+    "./bin/run-scrape-listing-details": {
+      "types": "./dist/bin/run-scrape-listing-details.d.mts",
+      "default": "./dist/bin/run-scrape-listing-details.mjs"
     }
   },
   "author": "Max Stein <maxwell.stein@gmail.com> (https://maxstein.net)",
@@ -22,6 +26,8 @@
     "build": "unbuild",
     "start": "node --env-file-if-exists=.env dist/bin/run-scrape-listings.mjs",
     "dev": "tsx --env-file-if-exists=.env src/bin/run-scrape-listings.ts",
+    "details:dev": "tsx --env-file-if-exists=.env src/bin/run-scrape-listing-details.ts",
+    "details": "node --env-file-if-exists=.env dist/bin/run-scrape-listing-details.mjs",
     "cli:dev": "tsx --env-file-if-exists=.env src/cli.ts",
     "cli": "node --env-file-if-exists=.env dist/cli.mjs",
     "typecheck": "tsc --noEmit",

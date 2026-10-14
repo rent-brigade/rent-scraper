@@ -16,6 +16,8 @@
     "check-config": "pnpm run --silent --filter create-config check-config",
     "scrape-listings:dev": "pnpm run --filter scrape-listings dev",
     "scrape-listings": "pnpm run --silent --filter scrape-listings start",
+    "scrape-listing-details:dev": "pnpm run --filter scrape-listings details:dev",
+    "scrape-listing-details": "pnpm run --silent --filter scrape-listings details",
     "create-config:dev": "pnpm run --filter create-config dev",
     "create-config": "pnpm run --silent --filter create-config start",
     "rent-scraper:dev": "pnpm run --filter rent-scraper dev",
