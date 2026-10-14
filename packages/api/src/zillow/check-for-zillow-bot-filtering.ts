@@ -112,6 +112,8 @@ export const waitForZillowCaptchaSolve = async () => {
   let captchaSeen = false
   let captchaFirstSeenAt: number | null = null
   let autoSolveAttempted = false
+  let reloadAttempts = 0
+  const maxReloadAttempts = 100
   while (true) {
     try {
       if (!captchaSeen) {
@@ -120,6 +122,13 @@ export const waitForZillowCaptchaSolve = async () => {
         if (result?.status === 'captcha') {
           captchaSeen = true
           captchaFirstSeenAt = Date.now()
+        } else if (result?.status === 'navigated') {
+          reloadAttempts++
+          if (reloadAttempts >= maxReloadAttempts) {
+            // no captcha after max attempts — proceed with current session
+            await refreshCookie()
+            return true
+          }
         }
       } else {
         // captcha is showing — poll without reloading so we don't interrupt the solve
