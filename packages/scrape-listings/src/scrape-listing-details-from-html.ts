@@ -94,24 +94,28 @@ const scrapeRedfinListingHtmlByFilePathAndExport = async (inputFilePath: string)
 }
 
 export const scrapeListingDetailsFromHtmlByFilePaths = async (source: ListingsSource, inputFilePaths: string[], errors?: ErrorLog) => {
-  // loop through files and fetch html; returns count of successfully parsed listings
-  const results = await Promise.all(inputFilePaths.map(async (inputFilePath) => {
-    try {
-      if (source === 'redfin') {
-        await scrapeRedfinListingHtmlByFilePathAndExport(inputFilePath)
-      } else {
-        await scrapeZillowListingHtmlByFilePathAndExport(inputFilePath)
+  // process in small batches to cap peak memory (cheerio + JSON parsing is heavy per file)
+  const BATCH_SIZE = 5
+  let count = 0
+  for (const batch of chunkArray(inputFilePaths, BATCH_SIZE) as string[][]) {
+    const results = await Promise.all(batch.map(async (inputFilePath) => {
+      try {
+        if (source === 'redfin') {
+          await scrapeRedfinListingHtmlByFilePathAndExport(inputFilePath)
+        } else {
+          await scrapeZillowListingHtmlByFilePathAndExport(inputFilePath)
+        }
+        const outputFilePath = inputFilePath.replace('.html', '.json')
+        return await checkForFile(outputFilePath) ? 1 : 0
+      } catch (error) {
+        const { message } = parseError(error)
+        errors?.add(message)
+        return 0
       }
-      // count it if the output json file exists
-      const outputFilePath = inputFilePath.replace('.html', '.json')
-      return await checkForFile(outputFilePath) ? 1 : 0
-    } catch (error) {
-      const { message } = parseError(error)
-      errors?.add(message)
-      return 0
-    }
-  }))
-  return results.reduce<number>((sum, n) => sum + n, 0)
+    }))
+    count += results.reduce<number>((sum, n) => sum + n, 0)
+  }
+  return count
 }
 
 export const scrapeListingDetailsFromHtmlByZipCodes = async (source: ListingsSource, zipCodes: number[], inputDirectory: string) => {
