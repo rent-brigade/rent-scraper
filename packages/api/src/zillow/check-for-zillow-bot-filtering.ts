@@ -135,7 +135,7 @@ export const waitForZillowCaptchaSolve = async () => {
         const result = await checkBrowserStatus()
         if (result?.status === 'navigated') {
           const duration = captchaFirstSeenAt ? Date.now() - captchaFirstSeenAt : 0
-          if (duration >= 3000) {
+          if (duration >= 3500) {
             // showed for long enough to be a real user solve
             await refreshCookie()
             return true
@@ -151,6 +151,6 @@ export const waitForZillowCaptchaSolve = async () => {
     } catch {
       // don't log the error
     }
-    await new Promise(resolve => setTimeout(resolve, captchaSeen ? 500 : 100))
+    await new Promise(resolve => setTimeout(resolve, captchaSeen ? 500 : 2000))
   }
 }
