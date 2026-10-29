@@ -135,6 +135,9 @@ export const openBrowser = async (url: string) => {
     const pageUrl = url
     const pages = await browser.pages()
     const page = pages?.[0] ?? await browser.newPage()
+    if (pages && pages.length > 1) {
+      await Promise.all(pages.slice(1).map(p => p.close()))
+    }
     const pageTitle = await page.title()
     // do not change page if captcha is showing
     if (pageTitle.includes('denied')) {
