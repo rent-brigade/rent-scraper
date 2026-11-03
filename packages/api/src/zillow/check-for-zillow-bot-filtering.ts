@@ -146,7 +146,8 @@ export const waitForZillowCaptchaSolve = async () => {
         }
         if (!autoSolveAttempted && await getZillowAutoCaptcha()) {
           autoSolveAttempted = true
-          await autoSolveCaptcha()
+          const solved = await autoSolveCaptcha()
+          if (!solved) autoSolveAttempted = false
           continue
         }
       }
