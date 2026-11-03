@@ -114,7 +114,9 @@ export const waitForZillowCaptchaSolve = async () => {
   let autoSolveAttempted = false
   let reloadAttempts = 0
   const maxReloadAttempts = 100
+  const deadline = Date.now() + 10 * 60 * 1000
   while (true) {
+    if (Date.now() > deadline) throw new Error('timed out waiting for captcha solve')
     try {
       if (!captchaSeen) {
         // rapid reloads to trigger the captcha challenge
