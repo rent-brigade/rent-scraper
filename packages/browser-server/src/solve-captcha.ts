@@ -32,6 +32,10 @@ export const solveZillowCaptcha = async (): Promise<boolean> => {
         // ignore puppeteer errors, try again
       }
 
+      await new Promise(resolve => setTimeout(resolve, 3000))
+      const titleAfterHold = await page.title()
+      if (!titleAfterHold.includes('denied')) return true
+
       await page.reload({ waitUntil: 'load' })
       const currentTitle = await page.title()
       if (!currentTitle.includes('denied')) return true
