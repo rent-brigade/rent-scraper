@@ -14,6 +14,7 @@ const CSV_HEADERS = [
   'agent_name', 'agent_phone_number', 'broker_name', 'broker_phone_number',
   'is_owned_by_listing_platform',
   'date_last_updated_at_source', 'date_scraped', 'scrape_job_name',
+  'latitude', 'longitude',
 ]
 
 const csvEscape = (val: unknown): string => {
@@ -79,6 +80,8 @@ const mapListingToRow = (data: any, scrapeJobName: string): Record<string, unkno
     date_last_updated_at_source: data.attributionInfo?.lastUpdated || '',
     date_scraped: data.timestamp ? dayjs(data.timestamp).format('YYYY-MM-DD HH:mm:ss') : '',
     scrape_job_name: scrapeJobName,
+    latitude: data.latitude ?? '',
+    longitude: data.longitude ?? '',
   }
 }
 
