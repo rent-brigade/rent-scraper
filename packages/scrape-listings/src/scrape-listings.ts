@@ -11,6 +11,7 @@ import { scrapeListingHtmlByZipCodes } from './scrape-listing-html.js'
 import { scrapeZillowListingResultsByZipCodes } from './scrape-zillow-listing-results.js'
 import { scrapeRedfinListingResultsByZipCodes } from './scrape-redfin-listing-results.js'
 import { scrapeZillowListingsToCsv } from './scrape-listings-to-csv.js'
+import { scrapeZillowPriceEventsToJson } from './scrape-price-events-to-json.js'
 import { getRedfinOutputPath, getRedfinZipCodes, getZillowOutputPath, getZillowZipCodes, getZillowDaysListed, getZillowLimit, getZillowOffset, getRedfinDaysListed } from '@rent-scraper/api/config'
 import { intro, log } from '@clack/prompts'
 import { setTimeout as sleep } from 'node:timers/promises'
@@ -202,6 +203,12 @@ export async function runScrapeListings() {
           totalCsvListings = numCsvListings
           if (numCsvListings > 0) {
             log.info(`CSV exported: ${numCsvListings} listings → ${csvOutputPath}`)
+          }
+
+          const priceEventsPath = path.join(zillowOutputPath, 'zillow', 'price-events', `${timestamp}.json`)
+          const numPriceEvents = await scrapeZillowPriceEventsToJson(listingsDirectory, priceEventsPath)
+          if (numPriceEvents > 0) {
+            log.info(`Price events exported: ${numPriceEvents} events → ${priceEventsPath}`)
           }
 
           // parse results data for text file output
