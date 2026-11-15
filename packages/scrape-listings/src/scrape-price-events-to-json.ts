@@ -45,7 +45,7 @@ export const scrapeZillowPriceEventsToJson = async (listingsDirectory: string, o
 
         const zpid = String(data.zpid)
         const listingId = createHash('md5').update(zpid).digest('hex')
-        const history: any[] = data.priceHistory
+        const history: any[] = data.priceHistory.filter((h: any) => h.postingIsRental)
 
         const prices = history.filter(h => h.price != null).map(h => h.price as number)
         const maxPrice = prices.length ? Math.max(...prices) : null
