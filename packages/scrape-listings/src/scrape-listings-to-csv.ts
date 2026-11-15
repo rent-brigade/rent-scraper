@@ -86,7 +86,8 @@ const mapListingToRow = (data: any, scrapeJobName: string): Record<string, unkno
 }
 
 export const scrapeZillowListingsToCsv = async (listingsDirectory: string, outputFilePath: string): Promise<number> => {
-  const scrapeJobName = path.basename(listingsDirectory)
+  const baseName = path.basename(listingsDirectory)
+  const scrapeJobName = baseName === 'listings' ? path.basename(path.dirname(listingsDirectory)) : baseName
   const rows: string[] = [CSV_HEADERS.join(',')]
 
   let entries

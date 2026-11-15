@@ -19,7 +19,8 @@ export interface PriceEvent {
 }
 
 export const scrapeZillowPriceEventsToJson = async (listingsDirectory: string, outputFilePath: string): Promise<number> => {
-  const scrapeJobName = path.basename(listingsDirectory)
+  const baseName = path.basename(listingsDirectory)
+  const scrapeJobName = baseName === 'listings' ? path.basename(path.dirname(listingsDirectory)) : baseName
   const events: PriceEvent[] = []
 
   let entries
