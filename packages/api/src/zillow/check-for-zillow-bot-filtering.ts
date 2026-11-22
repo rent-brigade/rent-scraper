@@ -147,7 +147,12 @@ export const waitForZillowCaptchaSolve = async () => {
         if (!autoSolveAttempted && await getZillowAutoCaptcha()) {
           autoSolveAttempted = true
           const solved = await autoSolveCaptcha()
-          if (!solved) autoSolveAttempted = false
+          if (solved) {
+            console.log('captcha auto-solved')
+          } else {
+            console.log('captcha auto-solve failed, retrying...')
+            autoSolveAttempted = false
+          }
           continue
         }
       }
