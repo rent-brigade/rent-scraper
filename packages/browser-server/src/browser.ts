@@ -102,7 +102,8 @@ export const launchBrowser = async (source = 'zillow' as ListingsSource) => {
     : await findNativeBrowser()
   console.log(`launching browser: ${nativePath ?? 'bundled chromium'}`)
   if (nativePath) {
-    exec(`"${nativePath}" --remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir="${userDataDir}"`, (error) => {
+    const linuxArgs = process.platform === 'linux' ? ' --disable-dev-shm-usage --no-sandbox --disable-setuid-sandbox' : ''
+    exec(`"${nativePath}" --remote-debugging-port=9222 --no-first-run --no-default-browser-check --user-data-dir="${userDataDir}"${linuxArgs}`, (error) => {
       if (error) console.error(`Error: ${error.message}`)
     })
   } else {
